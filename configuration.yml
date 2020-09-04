@@ -1,0 +1,23 @@
+output_bucket: zhaoyutimtest
+
+rectangular_size: 0.003
+
+max_cloud_probability: 65
+
+LNU_lighting_complex:
+  longitude: -122.237303
+  latitude: 38.593546
+  start: 2020-08-17T06:40
+  end: 2020-09-02T19:54
+
+SCU_lighting_complex:
+  longitude: -121.30435
+  latitude: 37.439437
+  start: 2020-08-18T09:25
+  end: 2020-09-02T19:54
+
+CZU_lighting_complex:
+  longitude: -122.2801549
+  latitude: 37.09736605
+  start: 2020-08-17T06:40
+  end: 2020-09-02T19:54
