@@ -1,7 +1,8 @@
 import ee
-from data_preparation.DatasetSentinel2 import DatasetSentinel2
-from data_preparation.DatasetLandsat8 import DatasetLandsat8
+from data_preparation.DatasetPrepareService import DatasetPrepareService
 
-ee.Initialize()
-dataset_sentinel2 = DatasetLandsat8('LNU_lighting_complex')
-dataset_sentinel2.prepare_dataset(False, True)
+if __name__ == '__main__':
+    ee.Initialize()
+    dataset_pre = DatasetPrepareService('LNU_lighting_complex', 'GOES')
+    dataset_pre.prepare_dataset(False, True)
+    #dataset = dataset_sentinel2.download_from_gcloud_and_parse()

@@ -1,0 +1,19 @@
+import ee
+
+ee.Initialize()
+
+class Landsat8:
+    def __init__(self):
+        self.landsat8 = ee.ImageCollection('LANDSAT/LC08/C01/T1_TOA')
+
+    def collection_of_interest(self, start_time, end_time, geometry):
+        landsat_collection = self.landsat8.filterDate(start_time, end_time).map(self.mask_L8_sr).filterBounds(geometry)
+        vis_params = {'bands': ['B4', 'B3', 'B2'], 'min': 0, 'max': 3000, 'gamma': 1.4}
+        return landsat_collection, vis_params
+
+    def mask_L8_sr(self, img):
+        cloud_shadow_bit_mask = (1 << 3)
+        clouds_bit_mask = (1 << 5)
+        qa = img.select('pixel_qa')
+        mask = qa.bitwiseAnd(cloud_shadow_bit_mask).eq(0).And(qa.bitwiseAnd(clouds_bit_mask).eq(0))
+        return img.updateMask(mask)

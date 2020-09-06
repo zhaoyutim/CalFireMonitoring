@@ -1,8 +1,6 @@
 output_bucket: zhaoyutimtest
 
-rectangular_size: 0.003
-
-max_cloud_probability: 65
+rectangular_size: 0.1
 
 LNU_lighting_complex:
   longitude: -122.237303
