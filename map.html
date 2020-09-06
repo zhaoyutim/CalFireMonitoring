@@ -23,7 +23,7 @@
             <meta name="viewport" content="width=device-width,
                 initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
             <style>
-                #map_94ecc39d459142b59b2416ef6987c467 {
+                #map_ee0ccf4584ab474fbafaf7f63fde6d8b {
                     position: relative;
                     width: 100.0%;
                     height: 100.0%;
@@ -35,22 +35,13 @@
 </head>
 <body>    
     
-<<<<<<< Updated upstream
-            <div class="folium-map" id="map_57f6572b61114df19111f3959df4c07d" ></div>
-=======
-            <div class="folium-map" id="map_94ecc39d459142b59b2416ef6987c467" ></div>
->>>>>>> Stashed changes
+            <div class="folium-map" id="map_ee0ccf4584ab474fbafaf7f63fde6d8b" ></div>
         
 </body>
 <script>    
     
-<<<<<<< Updated upstream
-            var map_57f6572b61114df19111f3959df4c07d = L.map(
-                "map_57f6572b61114df19111f3959df4c07d",
-=======
-            var map_94ecc39d459142b59b2416ef6987c467 = L.map(
-                "map_94ecc39d459142b59b2416ef6987c467",
->>>>>>> Stashed changes
+            var map_ee0ccf4584ab474fbafaf7f63fde6d8b = L.map(
+                "map_ee0ccf4584ab474fbafaf7f63fde6d8b",
                 {
                     center: [38.593546, -122.237303],
                     crs: L.CRS.EPSG3857,
@@ -64,58 +55,30 @@
 
         
     
-<<<<<<< Updated upstream
-            var tile_layer_fcafc4e8b99b4920aea2cc4ae6ed211f = L.tileLayer(
+            var tile_layer_bf095b1b881647b4b10ed1f853e8e2c8 = L.tileLayer(
                 "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
                 {"attribution": "Data by \u0026copy; \u003ca href=\"http://openstreetmap.org\"\u003eOpenStreetMap\u003c/a\u003e, under \u003ca href=\"http://www.openstreetmap.org/copyright\"\u003eODbL\u003c/a\u003e.", "detectRetina": false, "maxNativeZoom": 18, "maxZoom": 18, "minZoom": 0, "noWrap": false, "opacity": 1, "subdomains": "abc", "tms": false}
-            ).addTo(map_57f6572b61114df19111f3959df4c07d);
+            ).addTo(map_ee0ccf4584ab474fbafaf7f63fde6d8b);
         
     
-            var tile_layer_9c07c3bc891944b6a7354f2cf6447337 = L.tileLayer(
-                "https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/7a481b8ad6999d3afd66b4f9ee28729f-cb935b1b3a76e966b074e751c65c568f/tiles/{z}/{x}/{y}",
+            var tile_layer_86d700b6178a46d59184a3965886985e = L.tileLayer(
+                "https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/d12afa852ce8b6a577e8c185aa99bf0d-174d3c5a5f225ed88f5a387cec521487/tiles/{z}/{x}/{y}",
                 {"attribution": "Map Data \u00a9 Google Earth Engine", "detectRetina": false, "maxNativeZoom": 18, "maxZoom": 18, "minZoom": 0, "noWrap": false, "opacity": 1, "subdomains": "abc", "tms": false}
-            ).addTo(map_57f6572b61114df19111f3959df4c07d);
+            ).addTo(map_ee0ccf4584ab474fbafaf7f63fde6d8b);
         
     
-            var layer_control_851c659e04454500b2ce6511064ca005 = {
+            var layer_control_47ad6eb43f7445e893f697a1bd81e99f = {
                 base_layers : {
-                    "openstreetmap" : tile_layer_fcafc4e8b99b4920aea2cc4ae6ed211f,
+                    "openstreetmap" : tile_layer_bf095b1b881647b4b10ed1f853e8e2c8,
                 },
                 overlays :  {
-                    "s2CloudMasked" : tile_layer_9c07c3bc891944b6a7354f2cf6447337,
+                    "landsat8 CloudMasked" : tile_layer_86d700b6178a46d59184a3965886985e,
                 },
             };
             L.control.layers(
-                layer_control_851c659e04454500b2ce6511064ca005.base_layers,
-                layer_control_851c659e04454500b2ce6511064ca005.overlays,
+                layer_control_47ad6eb43f7445e893f697a1bd81e99f.base_layers,
+                layer_control_47ad6eb43f7445e893f697a1bd81e99f.overlays,
                 {"autoZIndex": true, "collapsed": true, "position": "topright"}
-            ).addTo(map_57f6572b61114df19111f3959df4c07d);
-=======
-            var tile_layer_76901ed404c340c6aed056b6216b4fb5 = L.tileLayer(
-                "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-                {"attribution": "Data by \u0026copy; \u003ca href=\"http://openstreetmap.org\"\u003eOpenStreetMap\u003c/a\u003e, under \u003ca href=\"http://www.openstreetmap.org/copyright\"\u003eODbL\u003c/a\u003e.", "detectRetina": false, "maxNativeZoom": 18, "maxZoom": 18, "minZoom": 0, "noWrap": false, "opacity": 1, "subdomains": "abc", "tms": false}
-            ).addTo(map_94ecc39d459142b59b2416ef6987c467);
-        
-    
-            var tile_layer_90127452d6124b3594a727331e09e2b5 = L.tileLayer(
-                "https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/69710592969c5445de94cd775d6ba5c6-8ebe6cb82b4d5fc5587ad592537f1baf/tiles/{z}/{x}/{y}",
-                {"attribution": "Map Data \u00a9 Google Earth Engine", "detectRetina": false, "maxNativeZoom": 18, "maxZoom": 18, "minZoom": 0, "noWrap": false, "opacity": 1, "subdomains": "abc", "tms": false}
-            ).addTo(map_94ecc39d459142b59b2416ef6987c467);
-        
-    
-            var layer_control_aea8422d10444bae8e188e4a24d7bd92 = {
-                base_layers : {
-                    "openstreetmap" : tile_layer_76901ed404c340c6aed056b6216b4fb5,
-                },
-                overlays :  {
-                    "s2CloudMasked" : tile_layer_90127452d6124b3594a727331e09e2b5,
-                },
-            };
-            L.control.layers(
-                layer_control_aea8422d10444bae8e188e4a24d7bd92.base_layers,
-                layer_control_aea8422d10444bae8e188e4a24d7bd92.overlays,
-                {"autoZIndex": true, "collapsed": true, "position": "topright"}
-            ).addTo(map_94ecc39d459142b59b2416ef6987c467);
->>>>>>> Stashed changes
+            ).addTo(map_ee0ccf4584ab474fbafaf7f63fde6d8b);
         
 </script>

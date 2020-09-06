@@ -8,16 +8,16 @@ import time
 import yaml
 
 # Load configuration file
-with open("configuration.yml", "r", encoding="utf8") as f:
+with open("config/configuration.yml", "r", encoding="utf8") as f:
     config = yaml.load(f, Loader=yaml.FullLoader)
 
 
-class eeMapClient:
-    def __init__(self, location):
+class EarthEngineMapClient:
+    def __init__(self, latitude, longitude):
         # Add EE drawing method to folium.
         folium.Map.add_ee_layer = self.add_ee_layer
-        self.latitude = location.get('latitude')
-        self.longitude = location.get('longitude')
+        self.latitude = latitude
+        self.longitude = longitude
         self.map = folium.Map(location=[self.latitude, self.longitude], zoom_start=12)
 
     def add_ee_layer(self, ee_image_object, vis_params, name):
@@ -36,14 +36,13 @@ class eeMapClient:
             control=True
         ).add_to(self.map)
 
-    def add_to_map(self, img, vis_params, name):
-        self.map.add_ee_layer(img, vis_params, name)
+    def initialize_map(self):
         self.map.add_child(folium.LayerControl())
         outHtml = '/Users/zhaoyu/PycharmProjects/CalFireMonitoring/map.html'
         self.map.save(outHtml)
         webbrowser.open('file://' + outHtml)
 
-    def download_image_to_gcloud(self, img, size, filename_prefix):
+    def download_image_to_gcloud(self, img, size, filename_prefix, export_region):
         '''
         Export images to google cloud, the output image is a rectangular with the center at given latitude and longitude
         :param img: Image in GEE
@@ -51,10 +50,6 @@ class eeMapClient:
         :param filename_prefix: The filename prefix in Google cloud
         :return: None
         '''
-        export_region = ee.Geometry.Rectangle([self.longitude - size,
-                                               self.latitude - size,
-                                               self.longitude + size,
-                                               self.latitude + size])
 
         pprint({'Image info:': img.getInfo()})
         print('Found Cloud Storage bucket.' if tf.io.gfile.exists('gs://' + config.get('output_bucket'))
