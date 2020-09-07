@@ -1,13 +1,18 @@
+import datetime
+
 import ee
 import ee.mapclient
+import yaml
 
 ee.Initialize()
 
-# Get a download URL for an image.
-image1 = ee.Image('CGIAR/SRTM90_V4')
-path = image1.getDownloadUrl({
-    'scale': 30,
-    'crs': 'EPSG:4326',
-    'region': '[[-120, 35], [-119, 35], [-119, 34], [-120, 34]]'
-})
-print(path)
+if __name__ == '__main__':
+    with open("config/configuration.yml", "r", encoding="utf8") as f:
+        config = yaml.load(f, Loader=yaml.FullLoader)
+
+    time = config.get('LNU_lighting_complex').get('start')
+    time2 = config.get('LNU_lighting_complex').get('end')
+    timedif = time2-time
+    print(str(timedif.days))
+
+    print(time + datetime.timedelta(days=1))

@@ -7,18 +7,21 @@ class Sentinel1:
         self.sentinel1 = ee.ImageCollection('COPERNICUS/S1_GRD')
 
     def collection_of_interest(self, start_time, end_time, geometry):
-        sentinel1_collection = self.sentinel1\
+        vh = self.sentinel1\
             .filter(ee.Filter.listContains('transmitterReceiverPolarisation', 'VV'))\
-            .filter(ee.Filter.eq('instrumentMode', 'IW'))\
-            .select('VV')\
-            .filterDate(self.start_time, self.end_time)\
-            .filterBounds(self.geometry)\
-            .map(self.mask_edge)
+            .filter(ee.Filter.listContains('transmitterReceiverPolarisation', 'VH'))\
+            .filterDate(start_time, end_time)\
+            .filterBounds(geometry)\
+            .filter(ee.Filter.eq('instrumentMode', 'IW'))
 
-        vis_params = {min: -25, max: 5}
-        return sentinel1_collection, vis_params
+        vhAscending = vh.filter(ee.Filter.eq('orbitProperties_pass', 'ASCENDING'))
+        vhDescending = vh.filter(ee.Filter.eq('orbitProperties_pass', 'DESCENDING'))
 
-    def mask_edge(self, img):
-        edge = img.lt(-30.0)
-        masked_image = img.mask().And(edge.Not())
-        return img.updateMask(masked_image)
+        composite = ee.Image.cat([
+            vhAscending.select('VH').mean(),
+            ee.ImageCollection(vhAscending.select('VV').merge(vhDescending.select('VV'))).mean(),
+            vhDescending.select('VH').mean()])\
+            .focal_median()
+
+        vis_params = {'bands': ['VH', 'VV', 'VH_1'], 'min': [-25, -20, -25], 'max': [0, 10, 0]}
+        return composite, vis_params

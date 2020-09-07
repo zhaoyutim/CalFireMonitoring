@@ -1,10 +1,10 @@
+import datetime
 import time
 from pprint import pprint
 
 import ee
 import tensorflow as tf
 import yaml
-from ipython_genutils.py3compat import xrange
 
 from data_preparation.satellites.GOES import GOES
 from data_preparation.satellites.Landsat8 import Landsat8
@@ -47,20 +47,24 @@ class DatasetPrepareService:
             satellite_client = VIIRS()
         else:
             satellite_client = Landsat8()
-
-        img_collection, vis_params = satellite_client.collection_of_interest(self.start_time, self.end_time, self.geometry)
-        img_collection_list = img_collection.toList(img_collection.size())
-        # Download tasks
-        if enable_downloading:
-            img_collection_size = img_collection.size().getInfo()
-            for i in range(img_collection_size):
-                self.download_image_to_gcloud(ee.Image(img_collection_list.get(i)), str(i))
-        # Visualization
+        time_dif = self.end_time-self.start_time
+        for i in range(time_dif.days):
+            date_of_interest = str(self.start_time + datetime.timedelta(days=i))
+            img_collection, vis_params = satellite_client.collection_of_interest(date_of_interest + 'T00:00',
+                                                                                 date_of_interest + 'T23:59',
+                                                                                 self.geometry)
+            # pprint(img_collection.getInfo())
+            img = img_collection.median()
+            system_id = str(img.get('system:index').getInfo())
+            # Download tasks
+            if enable_downloading:
+                self.download_image_to_gcloud(img, system_id)
+            # Visualization
+            if enable_visualization:
+                map_client = EarthEngineMapClient(self.latitude, self.longitude)
+                pprint({'Image info:': img.getInfo()})
+                map_client.add_ee_layer(img.clip(self.geometry), vis_params, self.satellite + system_id)
         if enable_visualization:
-            map_client = EarthEngineMapClient(self.latitude, self.longitude)
-            median_img = img_collection.median()
-            pprint({'Image info:': median_img.getInfo()})
-            map_client.add_ee_layer(median_img.clip(self.geometry), vis_params, self.satellite)
             map_client.initialize_map()
 
     def download_from_gcloud_and_parse(self):
