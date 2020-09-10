@@ -12,19 +12,16 @@ class Sentinel2:
         # Here needs to filter boundary on the rectangular or polygons, otherwise we would easily reach the limit(5000) of
         # elements.
         s2a_sr = self.sentinel2a.filterDate(start_time, end_time).filterBounds(geometry).map(self.maskEdges)
-        #s2c_sr = self.sentinel2c.filterDate(start_time, end_time).filterBounds(geometry).map(self.maskEdges)
         s2_clouds = self.s2_clouds.filterDate(start_time, end_time).filterBounds(geometry)
 
         s2a_sr_with_cloud_mask = ee.Join.saveFirst('cloud_mask') \
             .apply(s2a_sr, s2_clouds, ee.Filter.equals(leftField='system:index', rightField='system:index'))
-
-        # s2c_sr_with_cloud_mask = ee.Join.saveFirst('cloud_mask') \
-        #     .apply(s2c_sr, s2_clouds, ee.Filter.equals(leftField='system:index', rightField='system:index'))
-
         s2a_cloud_masked_collection = ee.ImageCollection(s2a_sr_with_cloud_mask).map(self.maskClouds)
-        # s2c_cloud_masked_collection = ee.ImageCollection(s2c_sr_with_cloud_mask).map(self.maskClouds)
-        vis_params = {'min': 0, 'max': 3000, 'bands': ['B12', 'B11', 'B12']}
-        return s2a_cloud_masked_collection, vis_params
+
+        return s2a_cloud_masked_collection
+
+    def get_visualization_parameter(self):
+        return {'min': 0, 'max': 3000, 'bands': ['B12', 'B11', 'B12']}
 
     def maskClouds(self, img):
         clouds = ee.Image(img.get('cloud_mask')).select('probability')

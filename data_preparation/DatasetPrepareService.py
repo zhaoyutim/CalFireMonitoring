@@ -28,47 +28,56 @@ class DatasetPrepareService:
         self.latitude = config.get(self.location).get('latitude')
         self.longitude = config.get(self.location).get('longitude')
         self.start_time = config.get(self.location).get('start')
-        self.end_time = config.get(self.location).get('end')
+        # self.end_time = config.get(self.location).get('end')
+        self.end_time = datetime.date.today()
         self.rectangular_size = config.get('rectangular_size')
         self.geometry = ee.Geometry.Rectangle(
             [self.longitude - self.rectangular_size, self.latitude - self.rectangular_size,
              self.longitude + self.rectangular_size, self.latitude + self.rectangular_size])
 
     def prepare_dataset(self, enable_downloading, enable_visualization):
+        map_client = EarthEngineMapClient(self.latitude, self.longitude)
         if self.satellite == 'Sentinel2':
             satellite_client = Sentinel2()
         elif self.satellite == 'MODIS':
             satellite_client = MODIS()
         elif self.satellite == 'GOES':
             satellite_client = GOES(self.geometry)
-        elif self.satellite == 'Sentinel1':
-            satellite_client = Sentinel1()
+        elif self.satellite == 'Sentinel1_asc':
+            satellite_client = Sentinel1("asc")
+        elif self.satellite == 'Sentinel1_dsc':
+            satellite_client = Sentinel1("dsc")
         elif self.satellite == 'VIIRS':
             satellite_client = VIIRS()
         else:
             satellite_client = Landsat8()
-        time_dif = self.end_time-self.start_time
+        time_dif = self.end_time - self.start_time
+        img_as_gif = []
+        vis_params = satellite_client.get_visualization_parameter()
         for i in range(time_dif.days):
             date_of_interest = str(self.start_time + datetime.timedelta(days=i))
-            img_collection, vis_params = satellite_client.collection_of_interest(date_of_interest + 'T00:00',
-                                                                                 date_of_interest + 'T23:59',
-                                                                                 self.geometry)
-            # pprint(img_collection.getInfo())
-            img = img_collection.median()
-            system_id = str(img.get('system:index').getInfo())
+            img_collection= satellite_client.collection_of_interest(date_of_interest + 'T00:00',
+                                                                    date_of_interest + 'T23:59',
+                                                                    self.geometry)
+            img = img_collection.max()
             # Download tasks
             if enable_downloading:
-                self.download_image_to_gcloud(img, system_id)
+                self.download_image_to_gcloud(img, date_of_interest)
             # Visualization
             if enable_visualization:
-                map_client = EarthEngineMapClient(self.latitude, self.longitude)
                 pprint({'Image info:': img.getInfo()})
-                map_client.add_ee_layer(img.clip(self.geometry), vis_params, self.satellite + system_id)
+                if len(img.getInfo().get('bands')) != 0:
+                    map_client.add_ee_layer(img.clip(self.geometry), vis_params, self.satellite + date_of_interest)
+                    img_as_gif.append(img)
+
+        img_as_gif = ee.ImageCollection(img_as_gif).select(vis_params.get('bands'))
         if enable_visualization:
+            # self.download_collection_as_video(img_as_gif, vis_params)
             map_client.initialize_map()
 
     def download_from_gcloud_and_parse(self):
-        train_file_path = 'gs://' + config.get('output_bucket') + '/' + "Cal_fire_" + self.location + 's2-a' + '.tfrecord.gz'
+        train_file_path = 'gs://' + config.get(
+            'output_bucket') + '/' + "Cal_fire_" + self.location + 's2-a' + '.tfrecord.gz'
         print('Found training file.' if tf.io.gfile.exists(train_file_path)
               else FileNotFoundError('No training file found.'))
         dataset = tf.data.TFRecordDataset(train_file_path, compression_type='GZIP')
@@ -79,7 +88,6 @@ class DatasetPrepareService:
 
         # Dictionary with names as keys, features as values.
         features_dict = dict(zip(self.feature_names, columns))
-
         pprint(features_dict)
 
         # Map the function over the dataset.
@@ -115,7 +123,14 @@ class DatasetPrepareService:
 
         image_task.start()
 
-        while image_task.active():
-            print('Polling for task (id: {}).'.format(image_task.id))
-            time.sleep(30)
-        print('Done with image export.')
+        print('Start with task (id: {}).'.format(image_task.id))
+
+    def download_collection_as_video(self, img_as_gif, vis_params):
+        videoArgs = {
+            'dimensions': 768,
+            'region': self.geometry,
+            'framesPerSecond': 7,
+            'min':  vis_params.get('min'),
+            'max':  vis_params.get('max'),
+        }
+        print(img_as_gif.getVideoThumbURL(videoArgs))
