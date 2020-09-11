@@ -1,2 +1,3 @@
+tensorflow-gpu
 PyYAML
 earthengine-api

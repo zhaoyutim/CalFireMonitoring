@@ -35,6 +35,6 @@ class EarthEngineMapClient:
 
     def initialize_map(self):
         self.map.add_child(folium.LayerControl())
-        outHtml = '/Users/zhaoyu/PycharmProjects/CalFireMonitoring/map.html'
+        outHtml = r"C:\Users\Yu\PycharmProjects\CalFireMonitoring\map.html"
         self.map.save(outHtml)
         webbrowser.open('file://' + outHtml)

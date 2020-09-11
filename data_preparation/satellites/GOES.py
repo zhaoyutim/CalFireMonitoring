@@ -13,7 +13,7 @@ class GOES:
         goes_size = goes_17_data.size()
         goes_list =goes_17_data.toList(goes_size)
         collection = []
-        for i in range(0, goes_size.getInfo()-1):
+        for i in range(0, goes_size.getInfo()):
             collection.append(self.applyScaleAndOffset(ee.Image(goes_list.get(i)).clip(self.geometry)))
         return ee.ImageCollection(collection)
 
@@ -40,4 +40,4 @@ class GOES:
         return ee.Image(ee.Image(bands).copyProperties(image, image.propertyNames()))
 
     def get_visualization_parameter(self):
-        return {'bands':['CMI_C13', 'CMI_C14', 'CMI_C07'], 'min': 0, 'max': 1.0}
+        return {'bands':['CMI_C07', 'CMI_C13', 'CMI_C14'], 'min': 0, 'max': 1.0}

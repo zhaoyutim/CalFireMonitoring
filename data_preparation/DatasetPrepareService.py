@@ -35,7 +35,7 @@ class DatasetPrepareService:
             [self.longitude - self.rectangular_size, self.latitude - self.rectangular_size,
              self.longitude + self.rectangular_size, self.latitude + self.rectangular_size])
 
-    def prepare_dataset(self, enable_downloading, enable_visualization):
+    def prepare_dataset(self, enable_downloading, enable_visualization, generate_gif):
         map_client = EarthEngineMapClient(self.latitude, self.longitude)
         if self.satellite == 'Sentinel2':
             satellite_client = Sentinel2()
@@ -65,15 +65,18 @@ class DatasetPrepareService:
                 self.download_image_to_gcloud(img, date_of_interest)
             # Visualization
             if enable_visualization:
-                pprint({'Image info:': img.getInfo()})
                 if len(img.getInfo().get('bands')) != 0:
                     map_client.add_ee_layer(img.clip(self.geometry), vis_params, self.satellite + date_of_interest)
                     img_as_gif.append(img)
+            if generate_gif and self.satellite == 'GOES':
+                self.download_collection_as_video(img_collection.select(vis_params.get('bands')), vis_params)
 
-        img_as_gif = ee.ImageCollection(img_as_gif).select(vis_params.get('bands'))
         if enable_visualization:
-            # self.download_collection_as_video(img_as_gif, vis_params)
             map_client.initialize_map()
+
+        if generate_gif and self.satellite != 'GOES':
+            img_as_gif = ee.ImageCollection(img_as_gif).select(vis_params.get('bands'))
+            self.download_collection_as_video(img_as_gif, vis_params)
 
     def download_from_gcloud_and_parse(self):
         train_file_path = 'gs://' + config.get(
@@ -117,6 +120,7 @@ class DatasetPrepareService:
             fileNamePrefix="Cal_fire_" + self.location + self.satellite + '-' + index,
             bucket=config.get('output_bucket'),
             scale=30,
+            maxPixels=1e6,
             # fileFormat='TFRecord',
             region=self.geometry.toGeoJSON()['coordinates'],
         )
@@ -125,12 +129,21 @@ class DatasetPrepareService:
 
         print('Start with task (id: {}).'.format(image_task.id))
 
-    def download_collection_as_video(self, img_as_gif, vis_params):
+    def download_collection_as_video(self, img_as_gif_collection, vis_params):
+        new_collection = []
+        collection_size = img_as_gif_collection.size().getInfo()
+        collection_list = img_as_gif_collection.toList(collection_size)
         videoArgs = {
-            'dimensions': 768,
+            'dimensions': 256,
             'region': self.geometry,
             'framesPerSecond': 7,
-            'min':  vis_params.get('min'),
-            'max':  vis_params.get('max'),
+            'min': vis_params.get('min'),
+            'max': vis_params.get('max'),
         }
-        print(img_as_gif.getVideoThumbURL(videoArgs))
+        increment = 50
+        for offset in range (0, collection_size, increment):
+            for index in range(offset, min(increment + offset, collection_size)):
+                new_image = ee.Image(collection_list.get(index))
+                new_collection.append(new_image)
+
+            print(ee.ImageCollection(new_collection).getVideoThumbURL(videoArgs))
