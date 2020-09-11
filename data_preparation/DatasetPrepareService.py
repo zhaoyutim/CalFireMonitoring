@@ -1,5 +1,4 @@
 import datetime
-import time
 from pprint import pprint
 
 import ee
@@ -34,6 +33,9 @@ class DatasetPrepareService:
             [self.longitude - self.rectangular_size, self.latitude - self.rectangular_size,
              self.longitude + self.rectangular_size, self.latitude + self.rectangular_size])
 
+    def cast_to_uint8(self, image):
+        return image.multiply(512).uint8()
+
     def prepare_dataset(self, enable_downloading, enable_visualization, generate_gif):
         map_client = EarthEngineMapClient(self.latitude, self.longitude)
         if self.satellite == 'Sentinel2':
@@ -56,19 +58,20 @@ class DatasetPrepareService:
         for i in range(time_dif.days):
             date_of_interest = str(self.start_time + datetime.timedelta(days=i))
             img_collection = satellite_client.collection_of_interest(date_of_interest + 'T00:00',
-                                                                    date_of_interest + 'T23:59',
-                                                                    self.geometry)
+                                                                     date_of_interest + 'T23:59',
+                                                                     self.geometry)
             img = img_collection.max()
             # Download tasks
             if enable_downloading:
-                self.download_image_to_gcloud(img, date_of_interest)
+                self.download_image_to_gcloud(img.toFloat(), date_of_interest)
             # Visualization
             if enable_visualization:
                 if len(img.getInfo().get('bands')) != 0:
                     map_client.add_ee_layer(img.clip(self.geometry), vis_params, self.satellite + date_of_interest)
                     img_as_gif.append(img)
             if generate_gif and self.satellite == 'GOES':
-                self.download_collection_as_video(img_collection.select(vis_params.get('bands')), vis_params)
+                self.download_collection_as_video(
+                    img_collection.select(vis_params.get('bands')).map(self.cast_to_uint8), date_of_interest)
 
         if enable_visualization:
             map_client.initialize_map()
@@ -106,10 +109,6 @@ class DatasetPrepareService:
         :param img: Image in GEE
         :return: None
         '''
-        img = ee.Image(img).toFloat()
-
-        print('Found Cloud Storage bucket.' if tf.io.gfile.exists('gs://' + config.get('output_bucket'))
-              else 'Can not find output Cloud Storage bucket.')
 
         # Setup the task.
         image_task = ee.batch.Export.image.toCloudStorage(
@@ -125,23 +124,20 @@ class DatasetPrepareService:
 
         image_task.start()
 
-        print('Start with task (id: {}).'.format(image_task.id))
+        print('Start with image task (id: {}).'.format(image_task.id))
 
-    def download_collection_as_video(self, img_as_gif_collection, vis_params):
-        new_collection = []
-        collection_size = img_as_gif_collection.size().getInfo()
-        collection_list = img_as_gif_collection.toList(collection_size)
-        videoArgs = {
-            'dimensions': 256,
-            'region': self.geometry,
-            'framesPerSecond': 7,
-            'min': vis_params.get('min'),
-            'max': vis_params.get('max'),
-        }
-        increment = 50
-        for offset in range (0, collection_size, increment):
-            for index in range(offset, min(increment + offset, collection_size)):
-                new_image = ee.Image(collection_list.get(index))
-                new_collection.append(new_image)
+    def download_collection_as_video(self, img_as_gif_collection, date):
+        video_task = ee.batch.Export.video.toCloudStorage(
+            collection=img_as_gif_collection,
+            description='Image Export',
+            fileNamePrefix="Cal_fire_" + self.location + self.satellite + '-' + str(date),
+            bucket=config.get('output_bucket')+'/videos',
+            maxPixels=1e9,
+            dimensions=768,
+            region=self.geometry.toGeoJSON()['coordinates'],
+        )
 
-            print(ee.ImageCollection(new_collection).getVideoThumbURL(videoArgs))
+        video_task.start()
+
+        print('Start with video task (id: {}).'.format(video_task.id))
+
