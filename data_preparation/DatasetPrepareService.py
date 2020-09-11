@@ -56,7 +56,7 @@ class DatasetPrepareService:
         vis_params = satellite_client.get_visualization_parameter()
         for i in range(time_dif.days):
             date_of_interest = str(self.start_time + datetime.timedelta(days=i))
-            img_collection= satellite_client.collection_of_interest(date_of_interest + 'T00:00',
+            img_collection = satellite_client.collection_of_interest(date_of_interest + 'T00:00',
                                                                     date_of_interest + 'T23:59',
                                                                     self.geometry)
             img = img_collection.max()
