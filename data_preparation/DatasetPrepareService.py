@@ -14,7 +14,6 @@ from data_preparation.satellites.Sentinel2 import Sentinel2
 from data_preparation.satellites.VIIRS import VIIRS
 from utils.EarthEngineMapClient import EarthEngineMapClient
 
-ee.Initialize()
 # Load configuration file
 with open("config/configuration.yml", "r", encoding="utf8") as f:
     config = yaml.load(f, Loader=yaml.FullLoader)
@@ -109,7 +108,6 @@ class DatasetPrepareService:
         '''
         img = ee.Image(img).toFloat()
 
-        pprint({'Image info:': img.getInfo()})
         print('Found Cloud Storage bucket.' if tf.io.gfile.exists('gs://' + config.get('output_bucket'))
               else 'Can not find output Cloud Storage bucket.')
 

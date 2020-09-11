@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<head>    
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+    
+        <script>
+            L_NO_TOUCH = false;
+            L_DISABLE_3D = false;
+        </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.6.0/dist/leaflet.js"></script>
+    <script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.6.0/dist/leaflet.css"/>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap-theme.min.css"/>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.css"/>
+    <link rel="stylesheet" href="https://rawcdn.githack.com/python-visualization/folium/master/folium/templates/leaflet.awesome.rotate.css"/>
+    <style>html, body {width: 100%;height: 100%;margin: 0;padding: 0;}</style>
+    <style>#map {position:absolute;top:0;bottom:0;right:0;left:0;}</style>
+    
+            <meta name="viewport" content="width=device-width,
+                initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+            <style>
+                #map_0edaef56f2b541189c58c43c3936a8a8 {
+                    position: relative;
+                    width: 100.0%;
+                    height: 100.0%;
+                    left: 0.0%;
+                    top: 0.0%;
+                }
+            </style>
+        
+</head>
+<body>    
+    
+            <div class="folium-map" id="map_0edaef56f2b541189c58c43c3936a8a8" ></div>
+        
+</body>
+<script>    
+    
+            var map_0edaef56f2b541189c58c43c3936a8a8 = L.map(
+                "map_0edaef56f2b541189c58c43c3936a8a8",
+                {
+                    center: [37.19147, -119.261175],
+                    crs: L.CRS.EPSG3857,
+                    zoom: 12,
+                    zoomControl: true,
+                    preferCanvas: false,
+                }
+            );
+
+            
+
+        
+    
+            var tile_layer_79b6b517758f4bc58e3733fece997adf = L.tileLayer(
+                "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+                {"attribution": "Data by \u0026copy; \u003ca href=\"http://openstreetmap.org\"\u003eOpenStreetMap\u003c/a\u003e, under \u003ca href=\"http://www.openstreetmap.org/copyright\"\u003eODbL\u003c/a\u003e.", "detectRetina": false, "maxNativeZoom": 18, "maxZoom": 18, "minZoom": 0, "noWrap": false, "opacity": 1, "subdomains": "abc", "tms": false}
+            ).addTo(map_0edaef56f2b541189c58c43c3936a8a8);
+        
+    
+            var tile_layer_28705e49e5b448858ea238d49de31acb = L.tileLayer(
+                "https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/08032d5bea962f6570545e56a84d27b8-c26e858cb5dad293240a5a8ff68ae008/tiles/{z}/{x}/{y}",
+                {"attribution": "Map Data \u00a9 Google Earth Engine", "detectRetina": false, "maxNativeZoom": 18, "maxZoom": 18, "minZoom": 0, "noWrap": false, "opacity": 1, "subdomains": "abc", "tms": false}
+            ).addTo(map_0edaef56f2b541189c58c43c3936a8a8);
+        
+    
+            var tile_layer_268466642fc04c528a4cb03a46d7e379 = L.tileLayer(
+                "https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/79d62a24c3c6aeef14a7d1a208f01969-6fc9bf7b029639f2e96c64f53fe52b52/tiles/{z}/{x}/{y}",
+                {"attribution": "Map Data \u00a9 Google Earth Engine", "detectRetina": false, "maxNativeZoom": 18, "maxZoom": 18, "minZoom": 0, "noWrap": false, "opacity": 1, "subdomains": "abc", "tms": false}
+            ).addTo(map_0edaef56f2b541189c58c43c3936a8a8);
+        
+    
+            var tile_layer_a3f9425105e74df2ae9c9b45a135c55a = L.tileLayer(
+                "https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/3ac9bbf448ece280e967b88165b07ceb-0f41949275ad8bcb07c61b2f68768e83/tiles/{z}/{x}/{y}",
+                {"attribution": "Map Data \u00a9 Google Earth Engine", "detectRetina": false, "maxNativeZoom": 18, "maxZoom": 18, "minZoom": 0, "noWrap": false, "opacity": 1, "subdomains": "abc", "tms": false}
+            ).addTo(map_0edaef56f2b541189c58c43c3936a8a8);
+        
+    
+            var tile_layer_af99828ef5104857ab9d7035879f5659 = L.tileLayer(
+                "https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/16ff89540d87f9551c6da164cb69b9ab-6d4ac6dd06fc8a2fdbbb31d635dda794/tiles/{z}/{x}/{y}",
+                {"attribution": "Map Data \u00a9 Google Earth Engine", "detectRetina": false, "maxNativeZoom": 18, "maxZoom": 18, "minZoom": 0, "noWrap": false, "opacity": 1, "subdomains": "abc", "tms": false}
+            ).addTo(map_0edaef56f2b541189c58c43c3936a8a8);
+        
+    
+            var tile_layer_0fda6fb65c0848a28290c1abb3e1572d = L.tileLayer(
+                "https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/c2be895b5a753af9a4183117569e037b-049e11de64ee9151571d0f8120f7610e/tiles/{z}/{x}/{y}",
+                {"attribution": "Map Data \u00a9 Google Earth Engine", "detectRetina": false, "maxNativeZoom": 18, "maxZoom": 18, "minZoom": 0, "noWrap": false, "opacity": 1, "subdomains": "abc", "tms": false}
+            ).addTo(map_0edaef56f2b541189c58c43c3936a8a8);
+        
+    
+            var tile_layer_762d6262033346ca8c93076875a66fd7 = L.tileLayer(
+                "https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/01924ddf063111bd6379ddc06509be62-c1244e97cc4b99f4c7b24d2f52b4602e/tiles/{z}/{x}/{y}",
+                {"attribution": "Map Data \u00a9 Google Earth Engine", "detectRetina": false, "maxNativeZoom": 18, "maxZoom": 18, "minZoom": 0, "noWrap": false, "opacity": 1, "subdomains": "abc", "tms": false}
+            ).addTo(map_0edaef56f2b541189c58c43c3936a8a8);
+        
+    
+            var tile_layer_21ea372f013645bd872a73320e884bd0 = L.tileLayer(
+                "https://earthengine.googleapis.com/v1alpha/projects/earthengine-legacy/maps/b171a5f6cd55ebbd6b01e987626c378b-67838585118b2094cf849c3be1666fc9/tiles/{z}/{x}/{y}",
+                {"attribution": "Map Data \u00a9 Google Earth Engine", "detectRetina": false, "maxNativeZoom": 18, "maxZoom": 18, "minZoom": 0, "noWrap": false, "opacity": 1, "subdomains": "abc", "tms": false}
+            ).addTo(map_0edaef56f2b541189c58c43c3936a8a8);
+        
+    
+            var layer_control_9f961c7defde457693b19e6f8f60cbb8 = {
+                base_layers : {
+                    "openstreetmap" : tile_layer_79b6b517758f4bc58e3733fece997adf,
+                },
+                overlays :  {
+                    "GOES2020-09-04" : tile_layer_28705e49e5b448858ea238d49de31acb,
+                    "GOES2020-09-05" : tile_layer_268466642fc04c528a4cb03a46d7e379,
+                    "GOES2020-09-06" : tile_layer_a3f9425105e74df2ae9c9b45a135c55a,
+                    "GOES2020-09-07" : tile_layer_af99828ef5104857ab9d7035879f5659,
+                    "GOES2020-09-08" : tile_layer_0fda6fb65c0848a28290c1abb3e1572d,
+                    "GOES2020-09-09" : tile_layer_762d6262033346ca8c93076875a66fd7,
+                    "GOES2020-09-10" : tile_layer_21ea372f013645bd872a73320e884bd0,
+                },
+            };
+            L.control.layers(
+                layer_control_9f961c7defde457693b19e6f8f60cbb8.base_layers,
+                layer_control_9f961c7defde457693b19e6f8f60cbb8.overlays,
+                {"autoZIndex": true, "collapsed": true, "position": "topright"}
+            ).addTo(map_0edaef56f2b541189c58c43c3936a8a8);
+        
+</script>

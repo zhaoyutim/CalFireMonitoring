@@ -1,7 +1,5 @@
 import ee
 
-ee.Initialize()
-
 class Sentinel1:
     def __init__(self, mode):
         self.sentinel1 = ee.ImageCollection('COPERNICUS/S1_GRD')

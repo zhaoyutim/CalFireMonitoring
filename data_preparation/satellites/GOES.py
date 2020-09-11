@@ -9,13 +9,8 @@ class GOES:
         # self.confidence_values = [1.0, 1.0, 0.9, 0.9, 0.8, 0.8, 0.5, 0.5, 0.3, 0.3, 0.1, 0.1]
 
     def collection_of_interest(self, start_time, end_time, geometry):
-        goes_17_data = self.goes_17.filterDate(start_time, end_time).filterBounds(geometry)
-        goes_size = goes_17_data.size()
-        goes_list =goes_17_data.toList(goes_size)
-        collection = []
-        for i in range(0, goes_size.getInfo()):
-            collection.append(self.applyScaleAndOffset(ee.Image(goes_list.get(i)).clip(self.geometry)))
-        return ee.ImageCollection(collection)
+        goes_17_collection = self.goes_17.filterDate(start_time, end_time).filterBounds(geometry).map(self.applyScaleAndOffset)
+        return ee.ImageCollection(goes_17_collection)
 
     def applyScaleAndOffset(self, image):
         image = ee.Image(image)

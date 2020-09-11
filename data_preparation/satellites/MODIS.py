@@ -1,10 +1,4 @@
-from pprint import pprint
-
 import ee
-from utils.EarthEngineMapClient import EarthEngineMapClient
-import yaml
-
-ee.Initialize()
 
 class MODIS:
     def __init__(self):

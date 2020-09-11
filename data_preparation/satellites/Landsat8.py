@@ -1,7 +1,5 @@
 import ee
 
-ee.Initialize()
-
 class Landsat8:
     def __init__(self):
         self.landsat8 = ee.ImageCollection('LANDSAT/LC08/C01/T1_TOA')
