@@ -2,6 +2,7 @@ import ee
 
 class Sentinel2:
     def __init__(self):
+        self.name = "Sentinel2"
         self.sentinel2c = ee.ImageCollection('COPERNICUS/S2')
         self.sentinel2a = ee.ImageCollection('COPERNICUS/S2_SR')
         self.s2_clouds = ee.ImageCollection('COPERNICUS/S2_CLOUD_PROBABILITY')

@@ -5,16 +5,17 @@ import folium
 import yaml
 
 # Load configuration file
-with open("config/configuration.yml", "r", encoding="utf8") as f:
+with open("data_preparation/config/configuration.yml", "r", encoding="utf8") as f:
     config = yaml.load(f, Loader=yaml.FullLoader)
 
 
 class EarthEngineMapClient:
-    def __init__(self, latitude, longitude):
+    def __init__(self, location):
         # Add EE drawing method to folium.
+        self.location = location
         folium.Map.add_ee_layer = self.add_ee_layer
-        self.latitude = latitude
-        self.longitude = longitude
+        self.latitude = config.get(self.location).get('latitude')
+        self.longitude = config.get(self.location).get('longitude')
         self.map = folium.Map(location=[self.latitude, self.longitude], zoom_start=12)
 
     def add_ee_layer(self, ee_image_object, vis_params, name):

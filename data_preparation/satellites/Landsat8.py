@@ -2,6 +2,7 @@ import ee
 
 class Landsat8:
     def __init__(self):
+        self.name = "Landsat8"
         self.landsat8 = ee.ImageCollection('LANDSAT/LC08/C01/T1_TOA')
 
     def collection_of_interest(self, start_time, end_time, geometry):

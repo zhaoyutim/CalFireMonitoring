@@ -1,4 +1,5 @@
 import datetime
+import urllib
 from pprint import pprint
 
 import ee
@@ -11,23 +12,20 @@ from data_preparation.satellites.MODIS import MODIS
 from data_preparation.satellites.Sentinel1 import Sentinel1
 from data_preparation.satellites.Sentinel2 import Sentinel2
 from data_preparation.satellites.VIIRS import VIIRS
-from utils.EarthEngineMapClient import EarthEngineMapClient
+from data_preparation.utils.EarthEngineMapClient import EarthEngineMapClient
 
 # Load configuration file
-with open("config/configuration.yml", "r", encoding="utf8") as f:
+with open("data_preparation/config/configuration.yml", "r", encoding="utf8") as f:
     config = yaml.load(f, Loader=yaml.FullLoader)
 
 
 class DatasetPrepareService:
-    def __init__(self, location, satellite):
+    def __init__(self, location):
         self.location = location
-        self.satellite = satellite
         self.rectangular_size = config.get('rectangular_size')
         self.latitude = config.get(self.location).get('latitude')
         self.longitude = config.get(self.location).get('longitude')
-        self.start_time = config.get(self.location).get('start')
-        # self.end_time = config.get(self.location).get('end')
-        self.end_time = datetime.date.today()
+
         self.rectangular_size = config.get('rectangular_size')
         self.geometry = ee.Geometry.Rectangle(
             [self.longitude - self.rectangular_size, self.latitude - self.rectangular_size,
@@ -36,49 +34,45 @@ class DatasetPrepareService:
     def cast_to_uint8(self, image):
         return image.multiply(512).uint8()
 
-    def prepare_dataset(self, enable_downloading, enable_visualization, generate_gif):
-        map_client = EarthEngineMapClient(self.latitude, self.longitude)
-        if self.satellite == 'Sentinel2':
+    def get_satellite_client(self, satellite):
+        if satellite == 'Sentinel2':
             satellite_client = Sentinel2()
-        elif self.satellite == 'MODIS':
+        elif satellite == 'MODIS':
             satellite_client = MODIS()
-        elif self.satellite == 'GOES':
-            satellite_client = GOES(self.geometry)
-        elif self.satellite == 'Sentinel1_asc':
+        elif satellite == 'GOES':
+            satellite_client = GOES()
+        elif satellite == 'Sentinel1_asc':
             satellite_client = Sentinel1("asc")
-        elif self.satellite == 'Sentinel1_dsc':
+        elif satellite == 'Sentinel1_dsc':
             satellite_client = Sentinel1("dsc")
-        elif self.satellite == 'VIIRS':
+        elif satellite == 'VIIRS':
             satellite_client = VIIRS()
         else:
             satellite_client = Landsat8()
-        time_dif = self.end_time - self.start_time
-        img_as_gif = []
+        return satellite_client
+
+    def prepare_daily_image(self, enable_image_downloading, satellite, date_of_interest):
+        satellite_client = self.get_satellite_client(satellite)
+        img_collection = satellite_client.collection_of_interest(date_of_interest + 'T00:00',
+                                                                 date_of_interest + 'T23:59',
+                                                                 self.geometry)
         vis_params = satellite_client.get_visualization_parameter()
-        for i in range(time_dif.days):
-            date_of_interest = str(self.start_time + datetime.timedelta(days=i))
-            img_collection = satellite_client.collection_of_interest(date_of_interest + 'T00:00',
-                                                                     date_of_interest + 'T23:59',
-                                                                     self.geometry)
-            img = img_collection.max()
-            # Download tasks
-            if enable_downloading:
-                self.download_image_to_gcloud(img.toFloat(), date_of_interest)
-            # Visualization
-            if enable_visualization:
-                if len(img.getInfo().get('bands')) != 0:
-                    map_client.add_ee_layer(img.clip(self.geometry), vis_params, self.satellite + date_of_interest)
-                    img_as_gif.append(img)
-            if generate_gif and self.satellite == 'GOES':
-                self.download_collection_as_video(
-                    img_collection.select(vis_params.get('bands')).map(self.cast_to_uint8), date_of_interest)
+        img_collection_as_gif = img_collection.select(vis_params.get('bands')).map(self.cast_to_uint8)
+        if enable_image_downloading and len(img_collection.max().getInfo().get('bands')) != 0:
+            vis_params['format'] = 'jpg'
+            vis_params['dimensions'] = 768
+            url = img_collection.max().clip(self.geometry).getThumbURL(vis_params)
+            print(url)
+            urllib.request.urlretrieve(url, 'images_for_gif/' + self.location + '/' + satellite + str(date_of_interest) + '.jpg')
+        return img_collection, img_collection_as_gif
 
-        if enable_visualization:
-            map_client.initialize_map()
+    def visualize_in_openstreetmap(self, img, map_client, satellite, date_of_interest):
+        satellite_client = self.get_satellite_client(satellite)
+        vis_params = satellite_client.get_visualization_parameter()
+        if len(img.getInfo().get('bands')) != 0:
+            map_client.add_ee_layer(img.clip(self.geometry), vis_params, satellite + date_of_interest)
+        return map_client
 
-        if generate_gif and self.satellite != 'GOES':
-            img_as_gif = ee.ImageCollection(img_as_gif).select(vis_params.get('bands'))
-            self.download_collection_as_video(img_as_gif, vis_params)
 
     def download_from_gcloud_and_parse(self):
         train_file_path = 'gs://' + config.get(
@@ -103,7 +97,7 @@ class DatasetPrepareService:
 
         return parsed_dataset
 
-    def download_image_to_gcloud(self, img, index):
+    def download_image_to_gcloud(self, img, satellite, index):
         '''
         Export images to google cloud, the output image is a rectangular with the center at given latitude and longitude
         :param img: Image in GEE
@@ -114,10 +108,11 @@ class DatasetPrepareService:
         image_task = ee.batch.Export.image.toCloudStorage(
             image=img,
             description='Image Export',
-            fileNamePrefix="Cal_fire_" + self.location + self.satellite + '-' + index,
-            bucket=config.get('output_bucket'),
+            fileNamePrefix="Cal_fire_" + self.location + satellite + '-' + index,
+            bucket=config.get('output_bucket') + self.location + satellite + '/',
             scale=30,
-            maxPixels=1e6,
+            maxPixels=1e9,
+            fileDimensions=256,
             # fileFormat='TFRecord',
             region=self.geometry.toGeoJSON()['coordinates'],
         )
@@ -126,14 +121,15 @@ class DatasetPrepareService:
 
         print('Start with image task (id: {}).'.format(image_task.id))
 
-    def download_collection_as_video(self, img_as_gif_collection, date):
+    def download_collection_as_video(self, img_as_gif_collection, satellite, date):
+
         video_task = ee.batch.Export.video.toCloudStorage(
             collection=img_as_gif_collection,
             description='Image Export',
-            fileNamePrefix="Cal_fire_" + self.location + self.satellite + '-' + str(date),
-            bucket=config.get('output_bucket')+'/videos',
+            fileNamePrefix="Cal_fire_" + self.location + satellite + '-' + str(date),
+            bucket=config.get('output_bucket'),
             maxPixels=1e9,
-            dimensions=768,
+            dimensions=256,
             region=self.geometry.toGeoJSON()['coordinates'],
         )
 

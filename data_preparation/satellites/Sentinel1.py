@@ -2,6 +2,7 @@ import ee
 
 class Sentinel1:
     def __init__(self, mode):
+        self.name = "Sentinel1"
         self.sentinel1 = ee.ImageCollection('COPERNICUS/S1_GRD')
         self.mode = mode
 

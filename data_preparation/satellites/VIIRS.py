@@ -3,6 +3,7 @@ import ee
 
 class VIIRS:
     def __init__(self):
+        self.name = "VIIRS"
         self.viirs = ee.ImageCollection('NOAA/VIIRS/001/VNP09GA')
 
     def collection_of_interest(self, start_time, end_time, geometry):

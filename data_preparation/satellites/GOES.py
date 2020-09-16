@@ -1,8 +1,8 @@
 import ee
 
 class GOES:
-    def __init__(self, geometry):
-        self.geometry = geometry
+    def __init__(self):
+        self.name = "GOES"
         self.goes_17 = ee.ImageCollection("NOAA/GOES/17/MCMIPF")
         # self.goes_17 = ee.ImageCollection("NOAA/GOES/17/FDCF")
         # self.fire_mask_codes = [10, 30, 11, 31, 12, 32, 13, 33, 14, 34, 15, 35]

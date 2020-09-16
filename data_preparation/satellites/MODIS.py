@@ -2,6 +2,7 @@ import ee
 
 class MODIS:
     def __init__(self):
+        self.name = "MODIS"
         self.modis = ee.ImageCollection("MODIS/006/MOD09GA")
 
     def collection_of_interest(self, start_time, end_time, geometry):
