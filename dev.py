@@ -13,14 +13,11 @@ with open("data_preparation/config/configuration.yml", "r", encoding="utf8") as 
 
 if __name__ == '__main__':
     ee.Initialize()
-    satellites = ['GOES', 'MODIS', 'VIIRS', 'Sentinel2']
-    locations = ['LNU_lighting_complex', 'SCU_lighting_complex', 'CZU_lighting_complex',
-                 'August_complex', 'Beachie_wildfire', 'Beachie_wildfire_2', 'Holiday_farm_wildfire',
-                 'North_complex_fire', 'North_complex_fire_2', 'North_complex_fire_3',
-                 'Cold_spring_fire', 'Doctor_creek_fire']
-    enable_visualization = True
+    satellites = ['Sentinel2']
+    locations = ['August_complex', 'North_complex_fire', 'creek_fire', 'Beachie_wildfire', 'Holiday_farm_wildfire', 'Cold_spring_fire', 'Doctor_creek_fire']
+    enable_visualization = False
     enable_downloading = False
-    generate_gif_for_goes = True
+    generate_gif_for_goes = False
     custom_generate_per_day = True
     for location in locations:
         start_time = config.get(location).get('start')

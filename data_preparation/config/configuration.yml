@@ -1,6 +1,6 @@
 output_bucket: zhaoyutimtest
 
-rectangular_size: 0.3
+rectangular_size: 0.5
 
 LNU_lighting_complex:
   longitude: -122.237303
@@ -11,20 +11,20 @@ LNU_lighting_complex:
 SCU_lighting_complex:
   longitude: -121.4389
   latitude: 37.3526
-  start: 2020-08-18
-  end: 2020-09-08
+  start: 2020-08-22
+  end: 2020-08-23
 
 CZU_lighting_complex:
   longitude: -122.2801549
   latitude: 37.09736605
-  start: 2020-08-17
-  end: 2020-09-08
+  start: 2020-08-22
+  end: 2020-08-23
 
 August_complex:
   longitude: -122.79
   latitude: 39.74
-  start: 2020-08-16
-  end: 2020-09-13
+  start: 2020-09-08
+  end: 2020-09-10
 
 North_complex_fire:
   longitude: -120.735708

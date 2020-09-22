@@ -36,15 +36,15 @@ class DatasetPrepareService:
 
     def get_satellite_client(self, satellite):
         if satellite == 'Sentinel2':
-            satellite_client = Sentinel2()
+            satellite_client = Sentinel2(False)
         elif satellite == 'MODIS':
             satellite_client = MODIS()
         elif satellite == 'GOES':
             satellite_client = GOES()
         elif satellite == 'Sentinel1_asc':
-            satellite_client = Sentinel1("asc")
+            satellite_client = Sentinel1("asc", self.location)
         elif satellite == 'Sentinel1_dsc':
-            satellite_client = Sentinel1("dsc")
+            satellite_client = Sentinel1("dsc", self.location)
         elif satellite == 'VIIRS':
             satellite_client = VIIRS()
         else:
@@ -65,6 +65,36 @@ class DatasetPrepareService:
             print(url)
             urllib.request.urlretrieve(url, 'images_for_gif/' + self.location + '/' + satellite + str(date_of_interest) + '.jpg')
         return img_collection, img_collection_as_gif
+
+    def prepare_image_patch(self, satellite, date_of_interest):
+        satellite_client = self.get_satellite_client(satellite)
+        img_collection = satellite_client.collection_of_interest(date_of_interest + 'T00:00',
+                                                                 date_of_interest + 'T23:59',
+                                                                 self.geometry)
+        featureStack = img_collection.max().float()
+
+        list = ee.List.repeat(1, 256)
+        lists = ee.List.repeat(list, 256)
+        kernel = ee.Kernel.fixed(256, 256, lists)
+
+        arrays = featureStack.neighborhoodToArray(kernel)
+        sample = arrays.sample(
+            region=self.geometry,
+            scale=30,
+            numPixels=10,
+            seed=1,
+            tileScale=8
+        )
+        task = ee.batch.Export.table.toCloudStorage(
+            collection=sample,
+            description='batch_export_test',
+            bucket=config.get('output_bucket'),
+            fileNamePrefix= self.location + satellite + '/' + 'Cal_fire',
+            fileFormat='GeoJSON'
+        )
+        task.start()
+        print('Start with image task (id: {}).'.format(task.id))
+        return sample
 
     def visualize_in_openstreetmap(self, img, map_client, satellite, date_of_interest):
         satellite_client = self.get_satellite_client(satellite)
@@ -108,12 +138,12 @@ class DatasetPrepareService:
         image_task = ee.batch.Export.image.toCloudStorage(
             image=img,
             description='Image Export',
-            fileNamePrefix="Cal_fire_" + self.location + satellite + '-' + index,
-            bucket=config.get('output_bucket') + self.location + satellite + '/',
+            fileNamePrefix=self.location + satellite + '/' + "Cal_fire_" + self.location + satellite + '-' + index,
+            bucket=config.get('output_bucket'),
             scale=30,
             maxPixels=1e9,
             fileDimensions=256,
-            # fileFormat='TFRecord',
+            fileFormat='TFRecord',
             region=self.geometry.toGeoJSON()['coordinates'],
         )
 
@@ -126,10 +156,10 @@ class DatasetPrepareService:
         video_task = ee.batch.Export.video.toCloudStorage(
             collection=img_as_gif_collection,
             description='Image Export',
-            fileNamePrefix="Cal_fire_" + self.location + satellite + '-' + str(date),
+            fileNamePrefix=self.location + satellite + '/' + "Cal_fire_" + self.location + satellite + '-' + str(date),
             bucket=config.get('output_bucket'),
             maxPixels=1e9,
-            dimensions=256,
+            dimensions=768,
             region=self.geometry.toGeoJSON()['coordinates'],
         )
 
@@ -137,3 +167,53 @@ class DatasetPrepareService:
 
         print('Start with video task (id: {}).'.format(video_task.id))
 
+    # def parse_tfrecord(self, example_proto):
+    #   """The parsing function.
+    #   Read a serialized example into the structure defined by FEATURES_DICT.
+    #   Args:
+    #     example_proto: a serialized Example.
+    #   Returns:
+    #     A dictionary of tensors, keyed by feature name.
+    #   """
+    #   return tf.io.parse_single_example(example_proto, FEATURES_DICT)
+    #
+    #
+    # def to_tuple(self, inputs):
+    #   """Function to convert a dictionary of tensors to a tuple of (inputs, outputs).
+    #   Turn the tensors returned by parse_tfrecord into a stack in HWC shape.
+    #   Args:
+    #     inputs: A dictionary of tensors, keyed by feature name.
+    #   Returns:
+    #     A tuple of (inputs, outputs).
+    #   """
+    #   inputsList = [inputs.get(key) for key in FEATURES]
+    #   stacked = tf.stack(inputsList, axis=0)
+    #   # Convert from CHW to HWC
+    #   stacked = tf.transpose(stacked, [1, 2, 0])
+    #   return stacked[:,:,:len(BANDS)], stacked[:,:,len(BANDS):]
+    #
+    #
+    # def get_dataset(self, pattern):
+    #   """Function to read, parse and format to tuple a set of input tfrecord files.
+    #   Get all the files matching the pattern, parse and convert to tuple.
+    #   Args:
+    #     pattern: A file pattern to match in a Cloud Storage bucket.
+    #   Returns:
+    #     A tf.data.Dataset
+    #   """
+    #   glob = tf.io.gfile.glob(pattern)
+    #   dataset = tf.data.TFRecordDataset(glob, compression_type='GZIP')
+    #   dataset = dataset.map(self.parse_tfrecord, num_parallel_calls=5)
+    #   dataset = dataset.map(self.to_tuple, num_parallel_calls=5)
+    #   return dataset
+    # def get_training_dataset():
+    #     """Get the preprocessed training dataset
+    #   Returns:
+    #     A tf.data.Dataset of training data.
+    #   """
+    #     glob = 'gs://' + BUCKET + '/' + FOLDER + '/' + TRAINING_BASE + '*'
+    #     dataset = get_dataset(glob)
+    #   shuffle will generate a buffer and everytime the records entered batch from buffer, shuffle function will fetch]
+    #   a new records
+    #     dataset = dataset.shuffle(BUFFER_SIZE).batch(BATCH_SIZE).repeat()
+    #     return dataset
