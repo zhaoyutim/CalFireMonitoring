@@ -5,25 +5,25 @@ rectangular_size: 0.5
 LNU_lighting_complex:
   longitude: -122.237303
   latitude: 38.593546
-  start: 2020-08-17
-  end: 2020-09-08
+  start: 2020-08-18
+  end: 2020-09-30
 
 SCU_lighting_complex:
   longitude: -121.4389
   latitude: 37.3526
-  start: 2020-08-22
-  end: 2020-08-23
+  start: 2020-08-14
+  end: 2020-10-01
 
 CZU_lighting_complex:
   longitude: -122.2801549
   latitude: 37.09736605
-  start: 2020-08-22
-  end: 2020-08-23
+  start: 2020-08-16
+  end: 2020-09-22
 
 August_complex:
   longitude: -122.97
   latitude: 39.8686
-  start: 2020-08-16
+  start: 2020-08-17
   end: 2020-09-23
 
 North_complex_fire:
@@ -75,7 +75,43 @@ Doctor_creek_fire:
   end: 2020-09-08
 
 creek_fire:
-  longitude: -119.261175
-  latitude: 37.19147
-  start: 2020-09-04
-  end: 2020-09-09
+  longitude: -119.3
+  latitude: 37.2
+  start: 2020-09-05
+  end: 2020-09-10
+
+hanninge_fire:
+  longitude: 18.039856
+  latitude: 59.143003
+  start: 2020-05-31
+  end: 2020-06-03
+
+blue_ridge_fire:
+  longitude: -117.68
+  latitude: 33.88
+  start: 2020-10-26
+  end: 2020-10-30
+
+silverado_fire:
+  longitude: -117.66
+  latitude: 33.74
+  start: 2020-10-26
+  end: 2020-10-27
+
+elephant_hill_fire:
+  longitude: -121.30
+  latitude: 50.75
+  start: 2017-07-06
+  end: 2017-07-30
+
+elephant_hill_fire:
+  longitude: -121.30
+  latitude: 50.75
+  start: 2017-07-06
+  end: 2017-07-30
+
+elephant_hill_fire:
+  longitude: -121.30
+  latitude: 50.75
+  start: 2017-07-06
+  end: 2017-07-30

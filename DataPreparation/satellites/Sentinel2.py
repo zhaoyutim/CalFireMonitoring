@@ -23,10 +23,10 @@ class Sentinel2:
             print(str(start_time))
             print(s2_clouds.first().clip(geometry).select('probability').reduceRegion(ee.Reducer.mean(), maxPixels=1e9).getInfo())
 
-        return s2a_cloud_masked_collection
+        return s2a_cloud_masked_collection.map(self.get_ratio)
 
     def get_visualization_parameter(self):
-        return {'min': 0, 'max': 3000, 'bands': ['B12', 'B11', 'B12']}
+        return {'min': -1, 'max':1, 'bands': ['index']}
 
     def mask_clouds(self, img):
         clouds = ee.Image(img.get('cloud_mask')).select('probability')
@@ -40,3 +40,13 @@ class Sentinel2:
                 .updateMask(s2_img.select('B9')
                             .mask())
         )
+
+    def get_ratio(self, img):
+        b08 = img.select('B8')
+        b11 = img.select('B11')
+        b12 = img.select('B12')
+        index = b11.subtract(b12).divide(b11.add(b12)).rename('index')
+        return ee.Image.cat([b08, b11, b12, index])
+
+    def get_comp(self, img):
+        return img.select(['B12','B8A','B4'])
