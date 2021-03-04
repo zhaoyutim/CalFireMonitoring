@@ -43,7 +43,7 @@ class GOES:
         return ee.Image(ee.Image(bands).copyProperties(image, image.propertyNames()))
 
     def get_visualization_parameter(self):
-        return {'bands':['index_max'], 'min': 0, 'max': 100}
+        return {'bands':['index'], 'min': 0, 'max': 100}
 
     def apply_resample(self, img):
         return img.resample()

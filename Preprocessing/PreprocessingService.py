@@ -2,7 +2,7 @@ import os
 from glob import glob
 from pathlib import Path
 
-import gdal
+from osgeo import gdal
 import matplotlib.pyplot as plt
 from array2gif import write_gif
 from imageio import imread, imsave
@@ -282,13 +282,20 @@ class PreprocessingService:
         dataset_output = np.stack(dataset, axis=0)
         np.save(save_path + '/' + location + ' dataset_trial5.npy', dataset_output.astype(np.float32))
 
-    def corp_tiff_to_same_size_training(self, location):
+    def corp_tiff_to_same_size(self, location, reference_mode):
         s2_path = 'data/' + location + 'Sentinel2'
-        goes_path = 'data/' + location +'GOES'
+        if reference_mode:
+            goes_path = 'data/evaluate/' + location + '/reference'
+            goes_fire_path = 'data/evaluate/' + location + '/goes_fire'
+        else:
+            goes_path = 'data/' + location +'GOES'
+            goes_fire_path = 'data/' + location + 'GOES_FIRE'
         s2_path = Path(s2_path)
         goes_path = Path(goes_path)
         goes_file_list = glob(str(goes_path / "*.tif"))
         s2_file_list = glob(str(s2_path / "*.tif"))
+        goes_fire_path = Path(goes_fire_path)
+        goes_fire_file_list = glob(str(goes_fire_path / "*.tif"))
         _, goes_profile = self.read_tiff(goes_file_list[0])
         _, s2_profile = self.read_tiff(s2_file_list[0])
         goes_bbox = [goes_profile.data.get('transform').column_vectors[2][0],
@@ -307,22 +314,31 @@ class PreprocessingService:
         lon_high = min(s2_bbox[1], goes_bbox[1])
         lat_low = max(s2_bbox[2], goes_bbox[2])
         lat_high = min(s2_bbox[3], goes_bbox[3])
-        lon_low = (lon_low // 6000 + 1) * 6000
-        lon_high = (lon_high // 6000) * 6000
-        lat_low = (lat_low // 6000 + 1) * 6000
-        lat_high = (lat_high // 6000) * 6000
+        if lon_low % 6000 != 0:
+            lon_low = (lon_low // 6000 + 1) * 6000
+        if lon_high % 6000 != 0:
+            lon_high = (lon_high // 6000) * 6000
+        if lat_low % 6000 != 0:
+            lat_low = (lat_low // 6000 + 1) * 6000
+        if lat_high % 6000 != 0:
+            lat_high = (lat_high // 6000) * 6000
 
         for file in s2_file_list:
             gdal.Warp(file, file, outputBounds=(lon_low,lat_low,lon_high,lat_high))
         for goes_file in goes_file_list:
             gdal.Warp(goes_file, goes_file, outputBounds=(lon_low, lat_low, lon_high, lat_high))
+        for goes_fire_file in goes_fire_file_list:
+            gdal.Warp(goes_fire_file, goes_fire_file, outputBounds=(lon_low, lat_low, lon_high, lat_high))
 
     def corp_tiff_to_same_size_referencing(self, location):
         s2_path = 'data/' + location + 'Sentinel2'
         goes_path = 'data/evaluate/'+location+'/reference'
+        goes_fire_path = 'data/evaluate/'+location+'/goes_fire'
         s2_path = Path(s2_path)
         goes_path = Path(goes_path)
         goes_file_list = glob(str(goes_path / "*.tif"))
+        goes_fire_path = Path(goes_fire_path)
+        goes_fire_file_list = glob(str(goes_fire_path / "*.tif"))
         s2_file_list = glob(str(s2_path / "*.tif"))
         _, goes_profile = self.read_tiff(goes_file_list[0])
         _, s2_profile = self.read_tiff(s2_file_list[0])
@@ -342,15 +358,21 @@ class PreprocessingService:
         lon_high = min(s2_bbox[1], goes_bbox[1])
         lat_low = max(s2_bbox[2], goes_bbox[2])
         lat_high = min(s2_bbox[3], goes_bbox[3])
-        lon_low = (lon_low // 6000 + 1) * 6000
-        lon_high = (lon_high // 6000) * 6000
-        lat_low = (lat_low // 6000 + 1) * 6000
-        lat_high = (lat_high // 6000) * 6000
+        if lon_low % 6000 != 0:
+            lon_low = (lon_low // 6000 + 1) * 6000
+        if lon_high % 6000 != 0:
+            lon_high = (lon_high // 6000) * 6000
+        if lat_low % 6000 != 0:
+            lat_low = (lat_low // 6000 + 1) * 6000
+        if lat_high % 6000 != 0:
+            lat_high = (lat_high // 6000) * 6000
 
         for file in s2_file_list:
             gdal.Warp(file, file, outputBounds=(lon_low,lat_low,lon_high,lat_high))
         for goes_file in goes_file_list:
             gdal.Warp(goes_file, goes_file, outputBounds=(lon_low, lat_low, lon_high, lat_high))
+        for goes_fire_file in goes_fire_file_list:
+            gdal.Warp(goes_fire_file, goes_fire_file, outputBounds=(lon_low, lat_low, lon_high, lat_high))
 
 
 

@@ -27,22 +27,16 @@ August_complex:
   end: 2020-09-23
 
 North_complex_fire:
-  longitude: -120.735708
-  latitude: 40.3145526
-  start: 2020-08-18
-  end: 2020-09-14
+  longitude: -120.12
+  latitude: 39.69
+  start: 2020-08-14
+  end: 2020-12-03
 
-North_complex_fire_2:
-  longitude: -120.580526
-  latitude: 40.0888574
-  start: 2020-08-18
-  end: 2020-09-14
-
-North_complex_fire_3:
-  longitude: -120.8556875
-  latitude: 39.88734
-  start: 2020-08-18
-  end: 2020-09-14
+Glass_fire:
+  longitude: -122.496
+  latitude: 38.565
+  start: 2020-09-27
+  end: 2020-10-30
 
 Beachie_wildfire:
   longitude: -122.138214
@@ -72,7 +66,7 @@ Doctor_creek_fire:
   longitude: -116.09788
   latitude: 50.0911
   start: 2020-08-18
-  end: 2020-09-08
+  end: 2020-08-24
 
 creek_fire:
   longitude: -119.3
@@ -99,19 +93,221 @@ silverado_fire:
   end: 2020-10-27
 
 elephant_hill_fire:
-  longitude: -121.30
-  latitude: 50.75
+  longitude: -121.28
+  latitude: 51.00
   start: 2017-07-06
   end: 2017-07-30
 
-elephant_hill_fire:
-  longitude: -121.30
-  latitude: 50.75
-  start: 2017-07-06
+plateau_fire:
+  longitude: -123.05
+  latitude: 52.30
+  start: 2017-07-07
   end: 2017-07-30
 
-elephant_hill_fire:
-  longitude: -121.30
-  latitude: 50.75
-  start: 2017-07-06
+hanceville_fire:
+  longitude: -123.10
+  latitude: 51.56
+  start: 2017-07-07
   end: 2017-07-30
+
+babine_complex:
+  longitude: -127.04
+  latitude: 53.90
+  start: 2018-07-31
+  end: 2018-08-30
+
+stikine_complex:
+  longitude: -131.50
+  latitude: 58.00
+  start: 2018-08-02
+  end: 2018-08-30
+
+fraser_complex:
+  longitude: -125.17
+  latitude: 54.20
+  start: 2018-07-27
+  end: 2018-08-01
+
+chuckegg_creek_fire:
+  longitude: -117.42
+  latitude: 58.38
+  start: 2019-05-15
+  end: 2019-05-22
+
+mexico_fire:
+  longitude: -102.73
+  latitude: 18.566
+  start: 2020-05-08
+  end: 2020-05-14
+
+brazil_fire:
+  longitude: -52.097
+  latitude: -8.240
+  start: 2020-09-02
+  end: 2020-09-10
+
+bond_fire:
+  longitude: -117.67
+  latitude: 33.74
+  start: 2020-12-02
+  end: 2020-12-07
+
+fraser_island_fire:
+  longitude: 153.13
+  latitude: -25.24
+  start: 2020-10-20
+  end: 2020-12-07
+
+alberta_fire_1:
+  longitude: -118.069
+  latitude: 55.137
+  start: 2020-06-18
+  end: 2020-06-30
+
+bc_fire_4:
+  longitude: -127.04
+  latitude: 53.91
+  start: 2020-10-10
+  end: 2020-10-11
+
+washinton_fire:
+  longitude: -119.556
+  latitude: 48.825
+  start: 2020-08-18
+  end: 2020-08-30
+
+oregon_fire:
+  longitude: -121.645
+  latitude: 44.738
+  start: 2020-08-17
+  end: 2020-08-30
+
+talbott_creek:
+  longitude: -117.01
+  latitude: 49.85
+  start: 2020-08-17
+  end: 2020-08-30
+
+christie_mountain:
+  longitude: -119.54
+  latitude: 49.364
+  start: 2020-08-18
+  end: 2020-09-30
+
+bush_fire:
+  longitude: -111.564
+  latitude: 33.629
+  start: 2020-06-13
+  end: 2020-07-06
+
+magnum_fire:
+  longitude: -112.34
+  latitude: 36.61
+  start: 2020-06-08
+  end: 2020-07-06
+
+bighorn_fire:
+  longitude: -111.03
+  latitude: 32.53
+  start: 2020-06-06
+  end: 2020-07-23
+
+santiam_fire:
+  longitude: -122.19
+  latitude: 44.82
+  start: 2020-08-31
+  end: 2020-09-30
+
+holiday_farm_fire:
+  longitude: -122.45
+  latitude: 44.15
+  start: 2020-09-07
+  end: 2020-09-30
+
+slater_fire:
+  longitude: -123.38
+  latitude: 41.77
+  start: 2020-09-07
+  end: 2020-09-30
+
+camp_fire:
+  longitude: -121.43
+  latitude: 39.81
+  start: 2018-11-08
+  end: 2018-11-10
+
+tubbs_fire:
+  longitude: -122.628
+  latitude: 38.61
+  start: 2017-10-08
+  end: 2017-10-10
+
+carr_fire:
+  longitude: -122.62
+  latitude: 40.65
+  start: 2018-07-23
+  end: 2018-07-25
+
+magee_fire:
+  longitude: -123.22
+  latitude: 49.88
+  start: 2020-04-15
+  end: 2020-04-16
+
+black_angus_creek_wildfire:
+  longitude: -128.7
+  latitude: 59.55
+  start: 2019-05-27
+  end: 2019-05-31
+
+eagle_bluff_fire:
+  longitude: -119.50
+  latitude: 49.42
+  start: 2019-08-05
+  end: 2019-08-10
+
+tagish_lake_fire:
+  longitude: -134.35
+  latitude: 59.43
+  start: 2019-08-03
+  end: 2019-08-10
+
+richter_creek_fire:
+  longitude: -119.66
+  latitude: 49.04
+  start: 2019-05-13
+  end: 2019-05-20
+
+richter_mountain_fire:
+  longitude: -119.70
+  latitude: 49.06
+  start: 2019-07-26
+  end: 2019-07-30
+
+Karbole_fire:
+  longitude: 15.13
+  latitude: 61.87
+  start: 2018-07-01
+  end: 2018-08-10
+
+N71114:
+  longitude: -117.70
+  latitude: 49.58
+  start: 2020-08-19
+  end: 2020-08-30
+  firms_time: 2020-08-19T08:36
+
+N31179:
+  longitude: -122.53
+  latitude: 50.22
+  start: 2020-08-17
+  end: 2020-08-30
+  firms_time: 2020-08-18T08:54
+
+N51227:
+  longitude: -124.53
+  latitude: 50.84
+  start: 2020-08-17
+  end: 2020-08-30
+  firms_time: 2020-08-17T20:45
+

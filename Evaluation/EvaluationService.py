@@ -98,7 +98,7 @@ class EvaluationService:
         dataset_output = np.stack(dataset, axis=0)
         np.save(save_path + '/' + location + ' dataset_ref.npy', dataset_output)
 
-    def reference_trial5(self, location):
+    def reference_trial5(self, location, custom_size):
         data_path = 'data/evaluate/' + location + '/reference'
         data_path = Path(data_path)
         save_path = 'data/evaluate/' + location + '/reference_dataset'
@@ -108,16 +108,20 @@ class EvaluationService:
         dataset = []
         maxed_dataset = []
         data_file_list.sort()
-        label_path = 'data/label/'+location + ' label'
-        label_path = Path(label_path)
-        label_file_list = glob(str(label_path / "*.tif"))
-        if len(label_file_list) == 0:
-            print('Please generate label first')
-            return
-        with rasterio.open(label_file_list[0], 'r') as reader:
-            label_arr = reader.read()  # read all raster values
-        x_size = label_arr.shape[1]
-        y_size = label_arr.shape[2]
+        if not custom_size:
+            label_path = 'data/label/'+location + ' label'
+            label_path = Path(label_path)
+            label_file_list = glob(str(label_path / "*.tif"))
+            if len(label_file_list) == 0:
+                print('Please generate label first')
+                return
+            with rasterio.open(label_file_list[0], 'r') as reader:
+                label_arr = reader.read()  # read all raster values
+            x_size = label_arr.shape[1]
+            y_size = label_arr.shape[2]
+        else:
+            x_size = 300
+            y_size = 250
         for file in data_file_list:
             with rasterio.open(file, 'r') as reader:
                 goes_arr = reader.read()  # read all raster values
@@ -143,58 +147,78 @@ class EvaluationService:
         dataset_output = np.stack(dataset, axis=0)
         np.save(save_path + '/' + location + ' dataset_ref_trial5'+str(x_size)+'*'+str(y_size)+'.npy', dataset_output.astype(np.float32))
 
-    def evaluate_mIoU(self, location, reference_satellite):
+    def evaluate_mIoU(self, location, reference_satellite, satellites):
+
         preprocessing = PreprocessingService()
         pre_fire_path = 'data/' + location + reference_satellite + '/' + location + reference_satellite + '_Cal_fire_' + location + reference_satellite + '-prefire.tif'
         s2_prefire, s2_prefire_profile = preprocessing.read_tiff(pre_fire_path)
         path = 'data/' + location + reference_satellite + '/'
         data_file_list = glob(str(Path(path) / "*.tif"))
         data_file_list.sort()
-        eval_path = 'data/label/' + location + ' label/'
-        eval_file_list = glob(str(Path(eval_path) / "*.tif"))
-        eval_file_list.sort()
-        independent_ec = 0
-        independent_eo = 0
-        tp = 0
-        tn = 0
-        for file in data_file_list:
-            if 'prefire' in file:
-                continue
-            s2_afterfire, _ = preprocessing.read_tiff(file)
-            d_index = np.nan_to_num(s2_afterfire[3]) - np.nan_to_num(s2_prefire[3])
-            # mask = d_index>-0.15
-            # img = np.ones((d_index.shape))
-            # img = npm.array(img, mask = mask)*255
-            ret, img = cv2.threshold(d_index, -2, -0.15, cv2.THRESH_TOZERO)
-            img = img < -0.15
-            s2_date = datetime.datetime.strptime(file.replace('data/'+location+'Sentinel2/'+location+'Sentinel2_Cal_fire_'+location+'Sentinel2-', '').replace('.tif', ''), '%Y-%m-%d')
-            acc_img = []
-            for eval_file in eval_file_list:
-                label_img, _ = preprocessing.read_tiff(eval_file)
-                label_img = np.flip(label_img[0,:,:], axis=0)
-                eval_date = datetime.datetime.strptime(eval_file.replace('data/label/'+location+' label/Cal_fire_'+location+'FIRMS-', '').replace('.tif', '')[:-17], '%Y-%m-%d')
-                if s2_date < eval_date:
-                    break
-                acc_img.append(label_img)
-            eval_img = np.stack(acc_img, axis=2).sum(axis=2)
-            # eval_img = np.load('data/evaluate/creek_fire/output_creek_fire_acc305_248.npy')
-            plt.imshow(eval_img)
-            plt.show()
-            plt.imshow(img)
-            plt.show()
-            mapping_factor = (img.shape[0]/eval_img.shape[0], img.shape[1]/eval_img.shape[1])
-            for i in range(75,225):
-                for j in range(50,175):
-                    s2_patch = img[round(i*mapping_factor[0]):round((i+1)*mapping_factor[0]), round(j*mapping_factor[1]):round((j+1)*mapping_factor[1])]
-                    if (s2_patch).max()==False and eval_img[i, j] != 0:
-                        independent_ec += 1
-                    elif (s2_patch).max()!=False and eval_img[i, j] == 0:
-                        independent_eo += 1
-                    elif (s2_patch).max()!=False and eval_img[i, j] != 0:
-                        tp += 1
-                    elif (s2_patch).max()==False and eval_img[i, j] == 0:
-                        tn += 1
+        for satellite in satellites:
+            if satellite == 'FIRMS':
+                eval_path = 'data/label/' + location + ' label/'
+                eval_file_list = glob(str(Path(eval_path) / "*.tif"))
+                eval_file_list.sort()
+            else:
+                eval_path = 'data/' + location + satellite + '/'
+                eval_file_list = glob(str(Path(eval_path) / "*.tif"))
+                eval_file_list.sort()
+            independent_ec = 0
+            independent_eo = 0
+            tp = 0
+            tn = 0
+            for file in data_file_list:
+                if 'prefire' in file:
+                    continue
+                s2_afterfire, _ = preprocessing.read_tiff(file)
+                d_index = np.nan_to_num(s2_afterfire[3]) - np.nan_to_num(s2_prefire[3])
+                # mask = d_index>-0.15
+                # img = np.ones((d_index.shape))
+                # img = npm.array(img, mask = mask)*255
+                ret, img = cv2.threshold(d_index, -2, -0.15, cv2.THRESH_TOZERO)
+                img = img < -0.3
+                s2_date = datetime.datetime.strptime(file.replace('data/'+location+'Sentinel2/'+location+'Sentinel2_Cal_fire_'+location+'Sentinel2-', '').replace('.tif', ''), '%Y-%m-%d')
+                if satellite != 'GOES':
+                    acc_img = []
+                    for eval_file in eval_file_list:
+                        label_img, _ = preprocessing.read_tiff(eval_file)
+                        label_img = np.flip(label_img[0,:,:], axis=0)
+                        if satellite == 'FIRMS':
+                            eval_date = datetime.datetime.strptime(eval_file.replace('data/label/'+location+' label/Cal_fire_'+location+'FIRMS-', '').replace('.tif', '')[:-17], '%Y-%m-%d')
+                        else:
+                            eval_date = datetime.datetime.strptime(
+                                eval_file.replace('data/' + location + satellite+'/'+location+satellite+'_Cal_fire_' + location + satellite + '-',
+                                                  '').replace('.tif', ''), '%Y-%m-%d')
+                        if s2_date < eval_date:
+                            break
+                        acc_img.append(label_img)
+                    eval_img = np.nan_to_num(np.stack(acc_img, axis=2).sum(axis=2))
+                else:
+                    eval_img = np.load('data/evaluate/' + location + '/output_' + location + '_acc246*230.npy')
+                    eval_img_resize = np.zeros((eval_img.shape[0]+10, eval_img.shape[1]+10))
+                    eval_img_resize[5:-5, 5:-5] = eval_img
+                    eval_img = eval_img_resize
+                lb = 0
+                ub = 1
+                # plt.imshow(eval_img[round(lb*eval_img.shape[0]):round(ub*eval_img.shape[0]),round(lb*eval_img.shape[1]):round(ub*eval_img.shape[1])])
+                plt.imshow(eval_img[round(lb*eval_img.shape[0]):round(ub*eval_img.shape[0]), round(lb*eval_img.shape[1]):round(ub*eval_img.shape[1])])
+                plt.show()
+                plt.imshow(img[round(lb*img.shape[0]):round(ub*img.shape[0]), round(lb*img.shape[1]):round(ub*img.shape[1])])
+                plt.show()
+                mapping_factor = (img.shape[0]/eval_img.shape[0], img.shape[1]/eval_img.shape[1])
+                for i in range(round(lb*eval_img.shape[0]), round(ub*eval_img.shape[0])):
+                    for j in range(round(lb*eval_img.shape[1]), round(ub*eval_img.shape[1])):
+                        s2_patch = img[round(i*mapping_factor[0]):round((i+1)*mapping_factor[0]), round(j*mapping_factor[1]):round((j+1)*mapping_factor[1])]
+                        if (s2_patch).max() == False and eval_img[i, j] != 0:
+                            independent_ec += 1
+                        elif (s2_patch).max() != False and eval_img[i, j] == 0:
+                            independent_eo += 1
+                        elif (s2_patch).max() != False and eval_img[i, j] != 0:
+                            tp += 1
+                        elif (s2_patch).max() == False and eval_img[i, j] == 0:
+                            tn += 1
 
-        print('Error of Commission:{}'.format(independent_ec/(tp+independent_ec)))
-        print('Error of Ommission:{}'.format(independent_eo/(tp+independent_eo)))
-        print(tp, tn)
+            print('Error of Commission:{}'.format(independent_ec/(tp+independent_ec)))
+            print('Error of Ommission:{}'.format(independent_eo/(tp+independent_eo)))
+            print(tp, tn)

@@ -25,7 +25,6 @@ from scipy.ndimage import gaussian_filter
 
 from DataPreparation.satellites.FIRM import FIRMS
 from DataPreparation.satellites.GOES import GOES
-from DataPreparation.satellites.GOES16 import GOES16
 from DataPreparation.satellites.GOES_FIRE import GOES_FIRE
 from DataPreparation.satellites.Landsat8 import Landsat8
 from DataPreparation.satellites.MODIS import MODIS
@@ -47,9 +46,9 @@ class DatasetPrepareService:
         self.latitude = config.get(self.location).get('latitude')
         self.longitude = config.get(self.location).get('longitude')
         self.start_time = config.get(location).get('start')
-        self.end_time = config.get(location).get('end')
+        # self.end_time = config.get(location).get('end')
         # self.start_time = datetime.date(2020, 9, 10)
-        # self.end_time = self.start_time + datetime.timedelta(days=2)
+        self.end_time = self.start_time + datetime.timedelta(days=2)
         # self.end_time = datetime.date.today()
 
         self.rectangular_size = config.get('rectangular_size')
@@ -182,7 +181,7 @@ class DatasetPrepareService:
 
         return parsed_dataset
 
-    def download_image_to_gcloud(self, img_coll, satellite, index):
+    def download_image_to_gcloud(self, img_coll, satellite, index, utm_zone):
         '''
         Export images to google cloud, the output image is a rectangular with the center at given latitude and longitude
         :param img: Image in GEE
@@ -198,7 +197,7 @@ class DatasetPrepareService:
                 fileNamePrefix=self.location + satellite + '/' + "Cal_fire_" + self.location + satellite + '-' + index,
                 bucket=config.get('output_bucket'),
                 scale=self.scale_dict.get(satellite),
-                crs='EPSG:32610',
+                crs='EPSG:' + utm_zone,
                 maxPixels=1e9,
                 # fileDimensions=256,
                 # fileFormat='TFRecord',
@@ -246,7 +245,7 @@ class DatasetPrepareService:
 
         print('Start with video task (id: {}).'.format(video_task.id))
 
-    def download_dataset_to_gcloud(self, satellites, download_images_as_jpeg_locally):
+    def download_dataset_to_gcloud(self, satellites, utm_zone, download_images_as_jpeg_locally):
         filenames = []
         time_dif = self.end_time - self.start_time
 
@@ -258,14 +257,14 @@ class DatasetPrepareService:
                                                                                         date_of_interest=date_of_interest)
                 max_img = img_collection.max()
                 if len(max_img.getInfo().get('bands')) != 0:
-                    self.download_image_to_gcloud(img_collection, satellite, date_of_interest)
+                    self.download_image_to_gcloud(img_collection, satellite, date_of_interest, utm_zone)
         if download_images_as_jpeg_locally:
             images = []
             for filename in filenames:
                 images.append(imageio.imread('images_for_gif/' + self.location + '/' + filename + '.jpg'))
             imageio.mimsave('images_for_gif/' + self.location + '.gif', images, format='GIF', fps=1)
 
-    def download_goes_dataset_to_gcloud_every_hour(self, download_images_as_jpeg_locally, satellite='GOES'):
+    def download_goes_dataset_to_gcloud_every_hour(self, download_images_as_jpeg_locally, utm_zone, satellite='GOES'):
         filenames = []
         time_dif = self.end_time - self.start_time
 
@@ -280,7 +279,7 @@ class DatasetPrepareService:
                                                                                         )
                 max_img = img_collection.max()
                 if len(max_img.getInfo().get('bands')) != 0:
-                    self.download_image_to_gcloud(img_collection, satellite, date_of_interest + "{:02d}:00".format(start_hour))
+                    self.download_image_to_gcloud(img_collection, satellite, date_of_interest + "{:02d}:00".format(start_hour), utm_zone)
         if download_images_as_jpeg_locally:
             images = []
             for filename in filenames:
@@ -360,21 +359,25 @@ class DatasetPrepareService:
             images.append(imageio.imread('images_after_processing/' + self.location + '/' + filename + '.jpg'))
         imageio.mimsave('images_after_processing/gif/' + '/' + self.location + '.gif', images, format='GIF', fps=1)
 
-    def firms_generation_from_csv_to_tiff(self, generate_goes, is_downsample, satellite='GOES'):
+    def firms_generation_from_csv_to_tiff(self, generate_goes, is_downsample, utm_zone, satellite='GOES'):
         preprocessing = PreprocessingService()
         time_dif = self.end_time - self.start_time
         dataset_pre = DatasetPrepareService(location=self.location)
+        label_path = 'data/label/' + self.location + ' label' + '/'
+        if not os.path.exists(label_path):
+            os.mkdir(label_path)
         for i in range(time_dif.days):
             date_of_interest = str(self.start_time + datetime.timedelta(days=i))
-            path = 'data/creek_fireSentinel2/creek_fireSentinel2_Cal_fire_creek_fireSentinel2-prefire.tif'
-            _, s2_prefire_profile = preprocessing.read_tiff(path)
-            bbox = [s2_prefire_profile.data.get('transform').column_vectors[2][0],
-                    s2_prefire_profile.data.get('transform').column_vectors[2][0] +
-                    s2_prefire_profile.data.get('transform').column_vectors[0][0] * s2_prefire_profile.data.get('width'),
-                    s2_prefire_profile.data.get('transform').column_vectors[2][1] +
-                    s2_prefire_profile.data.get('transform').column_vectors[1][1] * s2_prefire_profile.data.get('height'),
-                    s2_prefire_profile.data.get('transform').column_vectors[2][1]]
-            transformer = Transformer.from_crs(32610, 4326)
+            path = Path('data/evaluate/'+self.location+'/reference')
+            file_list = glob(str(path / "*.tif"))
+            _, profile = preprocessing.read_tiff(file_list[0])
+            bbox = [profile.data.get('transform').column_vectors[2][0],
+                    profile.data.get('transform').column_vectors[2][0] +
+                    profile.data.get('transform').column_vectors[0][0] * profile.data.get('width'),
+                    profile.data.get('transform').column_vectors[2][1] +
+                    profile.data.get('transform').column_vectors[1][1] * profile.data.get('height'),
+                    profile.data.get('transform').column_vectors[2][1]]
+            transformer = Transformer.from_crs(int(utm_zone), 4326)
             bot_left = transformer.transform(bbox[0], bbox[2])
             top_right = transformer.transform(bbox[1], bbox[3])
             lon = [bbox[0], bbox[1]]
@@ -385,10 +388,11 @@ class DatasetPrepareService:
             elif is_downsample == 'viirs':
                 res = 375
                 # all_location = pd.read_csv('data/FIRMS/fire_nrt_J1V-C2_156698.csv')
-                all_location = pd.read_csv('data/FIRMS/fire_nrt_V1_164026.csv')
+                # all_location = pd.read_csv('data/FIRMS/fire_archive_V1_166189.csv')
+                all_location = pd.read_csv('data/FIRMS/fire_nrt_V1_171071.csv')
             else:
                 res = 2000
-                all_location = pd.read_csv('data/FIRMS/fire_nrt_V1_164026.csv')
+                all_location = pd.read_csv('data/FIRMS/fire_archive_V1_166189.csv')
             xmin, ymin, xmax, ymax = [min(lon), min(lat), max(lon), max(lat)]
             nx = int((xmax - xmin) // res)
             ny = int((ymax - ymin) // res)
@@ -401,12 +405,14 @@ class DatasetPrepareService:
             day_pixel = fire_data_filter_on_date_and_bbox[fire_data_filter_on_date_and_bbox.daynight.eq('D')]
             night_pixel = fire_data_filter_on_date_and_bbox[fire_data_filter_on_date_and_bbox.daynight.eq('N')]
             daynight = fire_data_filter_on_date_and_bbox.daynight.unique()
-            transformer2 = Transformer.from_crs(4326, 32610)
-            for l in range(daynight.shape[0]):
-                if daynight[l] == 'D':
-                    timestamp_per_day = day_pixel.acq_time.unique()[0]
-                else:
-                    timestamp_per_day = night_pixel.acq_time.unique()[0]
+            transformer2 = Transformer.from_crs(4326, int(utm_zone))
+            # for l in range(daynight.shape[0]):
+            for time in range(len(fire_data_filter_on_date_and_bbox.acq_time.unique())):
+                timestamp_per_day = fire_data_filter_on_date_and_bbox.acq_time.unique()[time]
+                # if daynight[l] == 'D':
+                #     timestamp_per_day = day_pixel.acq_time.unique()[time]
+                # else:
+                #     timestamp_per_day = night_pixel.acq_time.unique()[time]
                 if generate_goes:
                     time_stamp_start, time_stamp_end = self.convert_int_to_timestamp(timestamp_per_day, 3)
                     img_collection, img_collection_as_gif = dataset_pre.prepare_daily_image(False, satellite=satellite,
@@ -414,11 +420,11 @@ class DatasetPrepareService:
                                                                                             time_stamp_start=time_stamp_start,
                                                                                             time_stamp_end=time_stamp_end)
                     dataset_pre.download_image_to_gcloud(img_collection, satellite,
-                                                         date_of_interest + '{:04d}'.format(timestamp_per_day) + str(3))
-                fire_data_filter_on_timestamp = np.array(fire_data_filter_on_date_and_bbox[
-                                                             fire_data_filter_on_date_and_bbox.daynight.eq(
-                                                                 daynight[l])])
-
+                                                         date_of_interest + '{:04d}'.format(timestamp_per_day) + str(3), utm_zone)
+                # fire_data_filter_on_timestamp = np.array(fire_data_filter_on_date_and_bbox[
+                #                                              fire_data_filter_on_date_and_bbox.daynight.eq(
+                #                                                  daynight[l])])
+                fire_data_filter_on_timestamp = np.array(fire_data_filter_on_date_and_bbox[fire_data_filter_on_date_and_bbox.acq_time.eq(timestamp_per_day)])
                 image_size = (ny, nx)
                 #  Create Each Channel
                 b1_pixels = np.zeros((image_size), dtype=np.float)
@@ -467,7 +473,7 @@ class DatasetPrepareService:
                 # b4_pixels = gaussian_filter(b4_pixels, sigma=1, order=0)
                 dst_ds.SetGeoTransform(geotransform)  # specify coords
                 srs = osr.SpatialReference()  # establish encoding
-                srs.ImportFromEPSG(32610)  # WGS84 lat/long
+                srs.ImportFromEPSG(int(utm_zone))  # WGS84 lat/long
                 dst_ds.SetProjection(srs.ExportToWkt())  # export coords to file
                 dst_ds.GetRasterBand(1).WriteArray(b1_pixels)  # write r-band to the raster
                 dst_ds.GetRasterBand(2).WriteArray(b2_pixels)  # write g-band to the raster

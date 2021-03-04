@@ -26,7 +26,7 @@ class Sentinel2:
         return s2a_cloud_masked_collection.map(self.get_ratio)
 
     def get_visualization_parameter(self):
-        return {'min': -1, 'max':1, 'bands': ['index']}
+        return {'min': 0, 'max':3000, 'bands': ['B12','B11','B12']}
 
     def mask_clouds(self, img):
         clouds = ee.Image(img.get('cloud_mask')).select('probability')
