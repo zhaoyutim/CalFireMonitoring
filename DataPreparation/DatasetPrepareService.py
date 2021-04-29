@@ -35,7 +35,7 @@ from DataPreparation.utils.EarthEngineMapClient import EarthEngineMapClient
 # Load configuration file
 from Preprocessing.PreprocessingService import PreprocessingService
 
-with open("DataPreparation/config/configuration.yml", "r", encoding="utf8") as f:
+with open("config/configuration.yml", "r", encoding="utf8") as f:
     config = yaml.load(f, Loader=yaml.FullLoader)
 
 
@@ -46,16 +46,16 @@ class DatasetPrepareService:
         self.latitude = config.get(self.location).get('latitude')
         self.longitude = config.get(self.location).get('longitude')
         self.start_time = config.get(location).get('start')
-        # self.end_time = config.get(location).get('end')
+        self.end_time = config.get(location).get('end')
         # self.start_time = datetime.date(2020, 9, 10)
-        self.end_time = self.start_time + datetime.timedelta(days=2)
+        # self.end_time = self.start_time + datetime.timedelta(days=2)
         # self.end_time = datetime.date.today()
 
         self.rectangular_size = config.get('rectangular_size')
         self.geometry = ee.Geometry.Rectangle(
             [self.longitude - self.rectangular_size, self.latitude - self.rectangular_size,
              self.longitude + self.rectangular_size, self.latitude + self.rectangular_size])
-        self.scale_dict = {"GOES": 2000, "GOES_FIRE": 2000, "FIRMS": 1000, "Sentinel2": 30, "VIIRS": 500, "MODIS": 500, "Sentinel1_asc": 30, "Sentinel1_dsc":30}
+        self.scale_dict = {"GOES": 375, "GOES_FIRE": 375, "FIRMS": 1000, "Sentinel2": 375, "VIIRS": 375, "MODIS": 500, "Sentinel1_asc": 20, "Sentinel1_dsc":20}
 
     def cast_to_uint8(self, image):
         return image.multiply(512).uint8()
@@ -84,16 +84,14 @@ class DatasetPrepareService:
             satellite_client = FIRMS()
         elif satellite == 'GOES_FIRE':
             satellite_client = GOES_FIRE()
-        elif satellite == 'GOES16':
-            satellite_client = GOES16()
         else:
             satellite_client = Landsat8()
         return satellite_client
 
     def prepare_daily_image(self, enable_image_downloading, satellite, date_of_interest, time_stamp_start="00:00", time_stamp_end="23:59"):
         satellite_client = self.get_satellite_client(satellite)
-        img_collection = satellite_client.collection_of_interest(date_of_interest + 'T' + time_stamp_start,
-                                                                 date_of_interest + 'T' + time_stamp_end,
+        img_collection = satellite_client.collection_of_interest(date_of_interest+'T'+time_stamp_start,
+                                                                 date_of_interest+'T'+time_stamp_end,
                                                                  self.geometry)
         vis_params = satellite_client.get_visualization_parameter()
         img_collection_as_gif = img_collection.select(vis_params.get('bands')).map(self.cast_to_uint8)
@@ -388,8 +386,9 @@ class DatasetPrepareService:
             elif is_downsample == 'viirs':
                 res = 375
                 # all_location = pd.read_csv('data/FIRMS/fire_nrt_J1V-C2_156698.csv')
-                # all_location = pd.read_csv('data/FIRMS/fire_archive_V1_166189.csv')
-                all_location = pd.read_csv('data/FIRMS/fire_nrt_V1_171071.csv')
+                # all_location = pd.read_csv('data/FIRMS/fire_archive_mid-2018-mid-2020.csv')
+
+                all_location = pd.read_csv('data/FIRMS/fire_nrt_V1_mid2020-end-2020.csv')
             else:
                 res = 2000
                 all_location = pd.read_csv('data/FIRMS/fire_archive_V1_166189.csv')
@@ -420,7 +419,7 @@ class DatasetPrepareService:
                                                                                             time_stamp_start=time_stamp_start,
                                                                                             time_stamp_end=time_stamp_end)
                     dataset_pre.download_image_to_gcloud(img_collection, satellite,
-                                                         date_of_interest + '{:04d}'.format(timestamp_per_day) + str(3), utm_zone)
+                                                         date_of_interest + '{:04d}'.format(timestamp_per_day), utm_zone)
                 # fire_data_filter_on_timestamp = np.array(fire_data_filter_on_date_and_bbox[
                 #                                              fire_data_filter_on_date_and_bbox.daynight.eq(
                 #                                                  daynight[l])])
@@ -459,12 +458,12 @@ class DatasetPrepareService:
                 if is_downsample:
                     dst_ds = gdal.GetDriverByName('GTiff').Create(
                         'data/label/' + self.location + ' label' + '/' + "Cal_fire_" + self.location + 'FIRMS' + '-' + str(
-                            date_of_interest) + '{:04d}'.format(timestamp_per_day)+str(3) + '_downsampled.tif', image_size[1],
+                            date_of_interest) + '{:04d}'.format(timestamp_per_day) + '.tif', image_size[1],
                         image_size[0], 4, gdal.GDT_Float64)
                 else:
                     dst_ds = gdal.GetDriverByName('GTiff').Create(
                         'data/label/' + self.location + ' label' + '/' + "Cal_fire_" + self.location + 'FIRMS' + '-' + str(
-                            date_of_interest) + '{:04d}'.format(timestamp_per_day)+str(3) + '.tif', image_size[1], image_size[0], 4,
+                            date_of_interest) + '{:04d}'.format(timestamp_per_day) + '.tif', image_size[1], image_size[0], 4,
                         gdal.GDT_Float64)
 
                 # b1_pixels = gaussian_filter(b1_pixels, sigma=1, order=0)
@@ -483,36 +482,40 @@ class DatasetPrepareService:
                 dst_ds = None
 
     def label_tiff_to_png(self, location):
-        data_path = 'data/label/'+location+' label'
+        data_path = 'data/progression/'+location
         data_path = Path(data_path)
         if not os.path.exists(data_path):
             os.mkdir(data_path)
         data_file_list = glob(str(data_path / "*.tif"))
         data_file_list.sort()
         count=0
-        background_path = 'data/png/'+location+'_sentinel2.png'
-        with rasterio.open(background_path, 'r') as reader:
-            background_as_array = reader.read()
+        # background_path = 'data/png/'+location+'_sentinel2.png'
+        # with rasterio.open(background_path, 'r') as reader:
+        #     background_as_array = reader.read()
         for file in data_file_list:
+            time = file[-14:-4]
             with rasterio.open(file, 'r') as reader:
                 tif_as_array = reader.read()
             output_image = np.rot90(tif_as_array[0, :, :], 2)
             output_image = np.flip(output_image, axis=1)
-            output_image = cv2.resize(output_image, (background_as_array.shape[2], background_as_array.shape[1]), interpolation=cv2.INTER_CUBIC)
+            # output_image = cv2.resize(output_image, (background_as_array.shape[2], background_as_array.shape[1]), interpolation=cv2.INTER_CUBIC)
             output_image = ((output_image - output_image.min()) * (1 / (output_image.max() - output_image.min()) * 255)).astype(
                 'uint8')
-            output_three_channel = np.zeros((output_image.shape[0], output_image.shape[1], 4))
-            output_three_channel[:, :, 0] = output_image
-            output_three_channel[:, :, 1] = np.zeros((output_image.shape[0], output_image.shape[1]))
-            output_three_channel[:, :, 2] = np.zeros((output_image.shape[0], output_image.shape[1]))
+            # output_three_channel = np.zeros((output_image.shape[0], output_image.shape[1], 4))
+            # output_three_channel[:, :, 0] = output_image
+            # output_three_channel[:, :, 1] = np.zeros((output_image.shape[0], output_image.shape[1]))
+            # output_three_channel[:, :, 2] = np.zeros((output_image.shape[0], output_image.shape[1]))
+            #
+            # # ret,alpha = cv2.threshold(output_image,0,255,cv2.THRESH_BINARY)
+            # output_three_channel[:, :, 3] = output_image
 
-            # ret,alpha = cv2.threshold(output_image,0,255,cv2.THRESH_BINARY)
-            output_three_channel[:, :, 3] = output_image
+            output_three_channel = np.zeros((output_image.shape[0], output_image.shape[1]))
+            output_three_channel[:, :] = output_image
 
-            cv2.putText(output_three_channel, location+' ' + file.replace('data/label/blue_ridge_fire label/Cal_fire_blue_ridge_fireGOES-','').replace('3_downsampled.tif','')[:-2]+':'+file.replace('data/label/blue_ridge_fire label/Cal_fire_blue_ridge_fireGOES-','').replace('3_downsampled.tif','')[-2:] , (400, 70),
-                        cv2.FONT_HERSHEY_SIMPLEX,
-                        1, (255, 255, 255, 255), 2, cv2.LINE_AA)
-            imageio.imsave('data/png/'+location+str(count)+'.png', output_three_channel)
+            # cv2.putText(output_three_channel, location+' ' + file.replace('data/label/blue_ridge_fire label/Cal_fire_blue_ridge_fireGOES-','').replace('3_downsampled.tif','')[:-2]+':'+file.replace('data/label/blue_ridge_fire label/Cal_fire_blue_ridge_fireGOES-','').replace('3_downsampled.tif','')[-2:] , (400, 70),
+            #             cv2.FONT_HERSHEY_SIMPLEX,
+            #             1, (255, 255, 255, 255), 2, cv2.LINE_AA)
+            imageio.imsave('data/png/'+location+time+'.png', output_three_channel)
             count += 1
 
 

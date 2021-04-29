@@ -5,7 +5,7 @@ import folium
 import yaml
 
 # Load configuration file
-with open("DataPreparation/config/configuration.yml", "r", encoding="utf8") as f:
+with open("config/configuration.yml", "r", encoding="utf8") as f:
     config = yaml.load(f, Loader=yaml.FullLoader)
 
 

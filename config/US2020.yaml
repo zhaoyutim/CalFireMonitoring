@@ -1,0 +1,393 @@
+!!python/object/new:easydict.EasyDict
+dictitems:
+  AZBush: &id018 !!python/object/new:easydict.EasyDict
+    dictitems:
+      BIOME_NAME: Mangroves
+      BIOME_NUM: 5
+      YEAR: 2020
+      areaTH: 1000.0
+      crs: EPSG:4326
+      modisEndDate: '2020-09-03'
+      modisStartDate: '2020-06-12'
+      name: AZBush
+      roi: &id002
+      - -111.64660565026134
+      - 33.52572899836681
+      - -111.11926190026134
+      - 34.05984422061784
+      s2_crs: EPSG:32612
+      year: 2020
+    state:
+      BIOME_NAME: Mangroves
+      BIOME_NUM: 5
+      YEAR: 2020
+      areaTH: 1000.0
+      crs: EPSG:4326
+      modisEndDate: '2020-09-03'
+      modisStartDate: '2020-06-12'
+      name: AZBush
+      roi: *id002
+      s2_crs: EPSG:32612
+      year: 2020
+  Amazon: &id019 !!python/object/new:easydict.EasyDict
+    dictitems:
+      BIOME_NAME: Tropical & Subtropical Dry Broadleaf Forests
+      BIOME_NUM: 7
+      YEAR: 2019
+      areaTH: 1000.0
+      crs: EPSG:4326
+      modisEndDate: '2019-11-13'
+      modisStartDate: '2019-03-13'
+      name: Amazon
+      roi: &id003
+      - -60.696398232640654
+      - -18.99566379145788
+      - -59.548326943578154
+      - -17.85435207632791
+      s2_crs: EPSG:32720
+      year: 2019
+    state:
+      BIOME_NAME: Tropical & Subtropical Dry Broadleaf Forests
+      BIOME_NUM: 7
+      YEAR: 2019
+      areaTH: 1000.0
+      crs: EPSG:4326
+      modisEndDate: '2019-11-13'
+      modisStartDate: '2019-03-13'
+      name: Amazon
+      roi: *id003
+      s2_crs: EPSG:32720
+      year: 2019
+  BC2017C10784: &id020 !!python/object/new:easydict.EasyDict
+    dictitems:
+      BIOME_NAME: Mangroves
+      BIOME_NUM: 5
+      YEAR: 2017
+      areaTH: 1000.0
+      crs: EPSG:32610
+      modisEndDate: '2017-09-08'
+      modisStartDate: '2017-07-08'
+      name: BC2017C10784
+      roi: &id004
+      - -124.52783481782407
+      - 52.26491528311718
+      - -122.73599679662699
+      - 53.35226349843808
+      s2_crs: EPSG:32610
+      year: 2017
+    state:
+      BIOME_NAME: Mangroves
+      BIOME_NUM: 5
+      YEAR: 2017
+      areaTH: 1000.0
+      crs: EPSG:32610
+      modisEndDate: '2017-09-08'
+      modisStartDate: '2017-07-08'
+      name: BC2017C10784
+      roi: *id004
+      s2_crs: EPSG:32610
+      year: 2017
+  BC2017C50647: &id021 !!python/object/new:easydict.EasyDict
+    dictitems:
+      BIOME_NAME: Mangroves
+      BIOME_NUM: 5
+      YEAR: 2017
+      areaTH: 1000.0
+      crs: EPSG:32610
+      modisEndDate: '2017-10-23'
+      modisStartDate: '2017-07-04'
+      name: BC2017C50647
+      roi: &id005
+      - -125.21095882134364
+      - 51.55758166977317
+      - -122.33725661707551
+      - 52.27583969180565
+      s2_crs: EPSG:32610
+      year: 2017
+    state:
+      BIOME_NAME: Mangroves
+      BIOME_NUM: 5
+      YEAR: 2017
+      areaTH: 1000.0
+      crs: EPSG:32610
+      modisEndDate: '2017-10-23'
+      modisStartDate: '2017-07-04'
+      name: BC2017C50647
+      roi: *id005
+      s2_crs: EPSG:32610
+      year: 2017
+  BC2018R12068: &id022 !!python/object/new:easydict.EasyDict
+    dictitems:
+      BIOME_NAME: Mangroves
+      BIOME_NUM: 5
+      YEAR: 2018
+      areaTH: 1000.0
+      crs: EPSG:32609
+      modisEndDate: '2018-09-25'
+      modisStartDate: '2018-08-01'
+      name: BC2018R12068
+      roi: &id006
+      - -126.78447641529593
+      - 52.96816954045099
+      - -125.78187741225734
+      - 53.439795164130366
+      s2_crs: EPSG:32609
+      year: 2018
+    state:
+      BIOME_NAME: Mangroves
+      BIOME_NUM: 5
+      YEAR: 2018
+      areaTH: 1000.0
+      crs: EPSG:32609
+      modisEndDate: '2018-09-25'
+      modisStartDate: '2018-08-01'
+      name: BC2018R12068
+      roi: *id006
+      s2_crs: EPSG:32609
+      year: 2018
+  BC2018R91947: &id023 !!python/object/new:easydict.EasyDict
+    dictitems:
+      BIOME_NAME: Mediterranean Forests, Woodlands & Scrub
+      BIOME_NUM: 6
+      S2: 20180918T200055_S2
+      YEAR: 2018
+      areaTH: 1000.0
+      crs: EPSG:32609
+      modisEndDate: '2018-09-08'
+      modisStartDate: '2018-08-01'
+      name: BC2018R91947
+      roi: &id007
+      - -131.63432066688068
+      - 57.8493191108018
+      - -130.49881502073745
+      - 58.27211457579114
+      s2_crs: EPSG:32609
+      year: 2018
+    state:
+      BIOME_NAME: Mediterranean Forests, Woodlands & Scrub
+      BIOME_NUM: 6
+      S2: 20180918T200055_S2
+      YEAR: 2018
+      areaTH: 1000.0
+      crs: EPSG:32609
+      modisEndDate: '2018-09-08'
+      modisStartDate: '2018-08-01'
+      name: BC2018R91947
+      roi: *id007
+      s2_crs: EPSG:32609
+      year: 2018
+  BC2018R92033: &id024 !!python/object/new:easydict.EasyDict
+    dictitems:
+      BIOME_NAME: Mediterranean Forests, Woodlands & Scrub
+      BIOME_NUM: 6
+      S2: 20180903T200040_S2
+      YEAR: 2018
+      areaTH: 1000.0
+      crs: EPSG:32609
+      modisEndDate: '2018-09-15'
+      modisStartDate: '2018-07-27'
+      name: BC2018R92033
+      roi: &id008
+      - -128.7937843028656
+      - 59.20204431115315
+      - -127.53417541064513
+      - 59.96807908773477
+      s2_crs: EPSG:32609
+      year: 2018
+    state:
+      BIOME_NAME: Mediterranean Forests, Woodlands & Scrub
+      BIOME_NUM: 6
+      S2: 20180903T200040_S2
+      YEAR: 2018
+      areaTH: 1000.0
+      crs: EPSG:32609
+      modisEndDate: '2018-09-15'
+      modisStartDate: '2018-07-27'
+      name: BC2018R92033
+      roi: *id008
+      s2_crs: EPSG:32609
+      year: 2018
+  Carr: &id025 !!python/object/new:easydict.EasyDict
+    dictitems:
+      BIOME_NAME: Mangroves
+      BIOME_NUM: 5
+      YEAR: 2018
+      areaTH: 1000.0
+      crs: EPSG:32610
+      modisEndDate: '2018-10-01'
+      modisStartDate: '2018-07-24'
+      name: Carr
+      roi: &id009
+      - -122.96342447509443
+      - 40.46942220136441
+      - -122.07902506103193
+      - 41.12023781743871
+      s2_crs: EPSG:32610
+      year: 2018
+    state:
+      BIOME_NAME: Mangroves
+      BIOME_NUM: 5
+      YEAR: 2018
+      areaTH: 1000.0
+      crs: EPSG:32610
+      modisEndDate: '2018-10-01'
+      modisStartDate: '2018-07-24'
+      name: Carr
+      roi: *id009
+      s2_crs: EPSG:32610
+      year: 2018
+  Chuckegg: &id026 !!python/object/new:easydict.EasyDict
+    dictitems:
+      BIOME_NAME: Mediterranean Forests, Woodlands & Scrub
+      BIOME_NUM: 6
+      YEAR: 2019
+      areaTH: 1000.0
+      crs: EPSG:32611
+      modisEndDate: '2019-07-28'
+      modisStartDate: '2019-05-15'
+      name: Chuckegg
+      roi: &id010
+      - -118.15516161677635
+      - 57.78735191577551
+      - -116.58411669490135
+      - 58.80344955293542
+      s2_crs: EPSG:32611
+      year: 2019
+    state:
+      BIOME_NAME: Mediterranean Forests, Woodlands & Scrub
+      BIOME_NUM: 6
+      YEAR: 2019
+      areaTH: 1000.0
+      crs: EPSG:32611
+      modisEndDate: '2019-07-28'
+      modisStartDate: '2019-05-15'
+      name: Chuckegg
+      roi: *id010
+      s2_crs: EPSG:32611
+      year: 2019
+  Mendocino: &id028 !!python/object/new:easydict.EasyDict
+    dictitems:
+      BIOME_NAME: N/A
+      BIOME_NUM: 12
+      YEAR: 2018
+      areaTH: 1000.0
+      crs: EPSG:32610
+      modisEndDate: '2018-08-31'
+      modisStartDate: '2018-06-24'
+      name: Mendocino
+      roi: &id012
+      - -123.24357584228193
+      - 38.918294081354006
+      - -122.35917642821943
+      - 39.584004430927514
+      s2_crs: EPSG:32610
+      year: 2018
+    state:
+      BIOME_NAME: N/A
+      BIOME_NUM: 12
+      YEAR: 2018
+      areaTH: 1000.0
+      crs: EPSG:32610
+      modisEndDate: '2018-08-31'
+      modisStartDate: '2018-06-24'
+      name: Mendocino
+      roi: *id012
+      s2_crs: EPSG:32610
+      year: 2018
+  Thomas: &id030 !!python/object/new:easydict.EasyDict
+    dictitems:
+      BIOME_NAME: N/A
+      BIOME_NUM: 12
+      YEAR: 2017
+      areaTH: 1000.0
+      crs: EPSG:32611
+      modisEndDate: '2017-12-20'
+      modisStartDate: '2017-12-02'
+      name: Thomas
+      roi: &id014
+      - -119.7345
+      - 34.2277
+      - -118.8913
+      - 34.6524
+      s2_crs: EPSG:32611
+      year: 2017
+    state:
+      BIOME_NAME: N/A
+      BIOME_NUM: 12
+      YEAR: 2017
+      areaTH: 1000.0
+      crs: EPSG:32611
+      modisEndDate: '2017-12-20'
+      modisStartDate: '2017-12-02'
+      name: Thomas
+      roi: *id014
+      s2_crs: EPSG:32611
+      year: 2017
+  elephant: &id032 !!python/object/new:easydict.EasyDict
+    dictitems:
+      BIOME_NAME: Mangroves
+      BIOME_NUM: 5
+      YEAR: 2017
+      areaTH: 1000.0
+      crs: EPSG:32610
+      modisEndDate: '2017-09-12'
+      modisStartDate: '2017-07-02'
+      name: elephant
+      roi: &id016
+      - -121.7697
+      - 50.6512
+      - -120.7068
+      - 51.5224
+      s2_crs: EPSG:32610
+      year: 2017
+    state:
+      BIOME_NAME: Mangroves
+      BIOME_NUM: 5
+      YEAR: 2017
+      areaTH: 1000.0
+      crs: EPSG:32610
+      modisEndDate: '2017-09-12'
+      modisStartDate: '2017-07-02'
+      name: elephant
+      roi: *id016
+      s2_crs: EPSG:32610
+      year: 2017
+  august: &id033 !!python/object/new:easydict.EasyDict
+    dictitems:
+      BIOME_NAME: Mangroves
+      BIOME_NUM: 5
+      areaTH: 1000.0
+      crs: EPSG:32610
+      modisEndDate: '2020-10-12'
+      modisStartDate: '2020-08-17'
+      name: US2020AugustComplex
+      roi: &id001
+      - -123.57474258154893
+      - 39.391824170134846
+      - -122.48434951514268
+      - 40.23360174430179
+      year: 2020
+    state:
+      BIOME_NAME: Mangroves
+      BIOME_NUM: 5
+      areaTH: 1000.0
+      crs: EPSG:32610
+      modisEndDate: '2020-10-12'
+      modisStartDate: '2020-08-17'
+      name: US2020AugustComplex
+      roi: *id001
+      year: 2020
+state:
+  AZBush: *id018
+  Amazon: *id019
+  BC2017C10784: *id020
+  BC2017C50647: *id021
+  BC2018R12068: *id022
+  BC2018R91947: *id023
+  BC2018R92033: *id024
+  Carr: *id025
+  Chuckegg: *id026
+  Mendocino: *id028
+  Thomas: *id030
+  elephant: *id032
+  august: *id033

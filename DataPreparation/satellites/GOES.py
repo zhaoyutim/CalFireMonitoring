@@ -9,8 +9,8 @@ class GOES:
         # self.confidence_values = [1.0, 1.0, 0.9, 0.9, 0.8, 0.8, 0.5, 0.5, 0.3, 0.3, 0.1, 0.1]
 
     def collection_of_interest(self, start_time, end_time, geometry):
-        goes_17_collection = self.goes_17.filterDate(start_time, end_time).filterBounds(geometry).map(self.applyScaleAndOffset).map(self.get_ratio)
-        goes_16_collection = self.goes_16.filterDate(start_time, end_time).filterBounds(geometry).map(self.applyScaleAndOffset).map(self.get_ratio)
+        goes_17_collection = self.goes_17.filterDate(start_time, end_time).filterBounds(geometry).map(self.applyScaleAndOffset).select(['CMI_C07','CMI_C14','CMI_C15']).map(self.get_ratio)
+        goes_16_collection = self.goes_16.filterDate(start_time, end_time).filterBounds(geometry).map(self.applyScaleAndOffset).select(['CMI_C07','CMI_C14','CMI_C15']).map(self.get_ratio)#.map(self.get_ratio)
         # goes_16_max_confidence = goes_16_collection.reduce(ee.Reducer.max())
         # goes_17_max_confidence = goes_17_collection.reduce(ee.Reducer.max())
         #

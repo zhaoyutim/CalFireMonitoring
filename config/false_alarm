@@ -1,0 +1,22 @@
+output_bucket: zhaoyutimtest
+
+rectangular_size: 0.5
+
+false_alarm_1:
+  longitude: -123.98
+  latitude: 48.95
+  start: 2017-10-31
+  end: 2017-10-31
+
+
+false_alarm_2:
+  longitude: -126.94
+  latitude: 53.81
+  start: 2017-10-09
+  end: 2017-10-11
+
+false_alarm_3:
+  longitude: -120.32
+  latitude: 51.09
+  start: 2019-10-22
+  end: 2019-10-24

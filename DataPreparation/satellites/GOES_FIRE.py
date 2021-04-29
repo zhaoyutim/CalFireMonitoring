@@ -1,3 +1,5 @@
+import datetime
+
 import ee
 
 class GOES_FIRE:
@@ -12,6 +14,7 @@ class GOES_FIRE:
 
     def collection_of_interest(self, start_time, end_time, geometry):
         self.geometry = geometry
+        # start_time = datetime.datetime.strptime(start_time, '%Y-%m-%d') - datetime.timedelta(days=1)
         goes_16_data = self.goes_16.filterDate(start_time, end_time).filterBounds(geometry)
         goes_17_data = self.goes_17.filterDate(start_time, end_time).filterBounds(geometry)
 
