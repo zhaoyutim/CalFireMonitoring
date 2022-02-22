@@ -3,6 +3,7 @@ import os
 from glob import glob
 from pathlib import Path
 
+from google.cloud import storage
 from osgeo import gdal
 import matplotlib.pyplot as plt
 from array2gif import write_gif
@@ -19,18 +20,6 @@ with open("config/configuration.yml", "r", encoding="utf8") as f:
 
 class PreprocessingService:
 
-    def get_composition(self, input_arr, vis_params):
-        if len(vis_params) == 1:
-            return input_arr
-        else:
-            composition = np.zeros((3, input_arr.shape[1], input_arr.shape[2]))
-            red = vis_params.get("red_band")
-            green = vis_params.get("green_band")
-            blue = vis_params.get("blue_band")
-            composition[0, :, :] = input_arr[red, :, :]
-            composition[1, :, :] = input_arr[green, :, :]
-            composition[2, :, :] = input_arr[blue, :, :]
-            return composition
 
     def padding(self, coarse_arr, array_to_be_downsampled):
         array_to_be_downsampled = np.pad(array_to_be_downsampled, ((0, 0), (0, coarse_arr.shape[1] * 2 - array_to_be_downsampled.shape[1]), (0, coarse_arr.shape[2] * 2 - array_to_be_downsampled.shape[2])), 'constant', constant_values = (0, 0))
@@ -49,6 +38,19 @@ class PreprocessingService:
         with rasterio.Env():
             with rasterio.open(file_path, 'w', **profile) as dst:
                 dst.write(arr.astype(rasterio.float32))
+
+    def upload_to_gcloud(self, file):
+        print('Upload to gcloud')
+        file_name = file.split('/')[-1]
+        storage_client = storage.Client()
+        bucket = storage_client.bucket('ai4wildfire')
+        if not storage.Blob(bucket=bucket, name='dataset/'+ file_name).exists(storage_client):
+            upload_cmd = 'gsutil cp ' + file + ' gs://ai4wildfire/' + 'dataset/' + file_name
+            print(upload_cmd)
+            os.system(upload_cmd)
+            print('finish uploading' + file)
+        else:
+            print('file exist already')
 
     def dataset_generator_proj1(self, location):
         location_and_satellite = location + 'GOES'
@@ -97,34 +99,92 @@ class PreprocessingService:
         np.save(save_path + '/' + location + ' dataset_trial5.npy', dataset_output.astype(np.float32))
 
     def dataset_generator_proj2(self, location, satellites):
-        viirs_path = Path('data/' + location + 'VIIRS')
-        goes_path = 'data/' + location + 'GOES'
-        label_path = 'data/progression/'+ location
-        viirs_file_list = glob(str(viirs_path / "*.tif"))
-        viirs_file_list.sort()
-        template_arr, _ = self.read_tiff(viirs_file_list[0])
-        dataset_proj2 = np.zeros((len(viirs_file_list), 7, 256, 160))
-        goes_acc = np.zeros(template_arr.shape)
-        for i in range(len(viirs_file_list)):
-            current_date = viirs_file_list[i][-14:-4]
-            goes_file = goes_path + '/' + location + 'GOES_Cal_fire_' + location+'GOES-'+str(current_date)+'.tif'
-            label_file = label_path + '/' + location + str(current_date)+'.tif'
-            goes_arr, goes_profile = self.read_tiff(goes_file)
-            goes_arr = np.maximum(goes_arr, goes_acc)
-            goes_acc = goes_arr
-            if not os.path.isfile(label_file):
-                dataset_proj2 = dataset_proj2[:i,:,:,:]
-                break
-            label_arr, label_profile = self.read_tiff(label_file)
-            label_arr = np.nan_to_num(np.flip(label_arr, axis=0))
-            viirs_arr, viirs_profile = self.read_tiff(viirs_file_list[i])
-            viirs_arr = np.nan_to_num(viirs_arr)
-            goes_arr = np.nan_to_num(goes_arr)
-            dataset_proj2[i, :3, :, :] = goes_arr[:, round(goes_arr.shape[1]*0.03):round(goes_arr.shape[1]*0.03)+256, :160]
-            dataset_proj2[i, 3:6, :, :] = viirs_arr[:, round(viirs_arr.shape[1]*0.03):round(viirs_arr.shape[1]*0.03)+256, :160]
-            dataset_proj2[i, 6, :, :] = label_arr[:, round(label_arr.shape[1]*0.03):round(label_arr.shape[1]*0.03)+256, :160]
+        modis_path = Path('data/' + location + '/' + 'MODIS')
+        s3_path = 'data/' + location + '/' + 'S3'
+        label_path = 'data/' + location + '/' + 'FIRMS'
+        modis_file_list = glob(str(modis_path / "*.tif"))
+        modis_file_list.sort()
+        template_arr, _ = self.read_tiff(modis_file_list[0])
+        s3_bands_1k = ["S7", "S8", "F1", "F2"]
+        s3_bands_500 = ["S6", "S3", "S1"]
+        size_dataset = len(modis_file_list)
+        arr_500 = np.zeros((size_dataset, 11, 256, 256))
+        arr_acc = np.zeros((7,256,256))
+        for i in range(size_dataset):
+            current_date = modis_file_list[i][-20:-10]
+            label_file = label_path + '/' + str(current_date)+'_FIRMS.tif'
 
-        return dataset_proj2
+            for j in range(len(s3_bands_500)):
+                s3_file_500 = s3_path + '/' + str(current_date)+'T17_S3.band' + s3_bands_500[j] + '.tif'
+                s3_arr, s3_profile = self.read_tiff(s3_file_500.replace('-', ''))
+
+                s3_arr = cv2.resize(s3_arr[0], (256, 256),
+                                    interpolation=cv2.INTER_LINEAR)
+                s3_arr = np.nan_to_num(s3_arr)
+                s3_arr = np.ma.masked_equal(s3_arr, 0)
+                s3_arr = (s3_arr - s3_arr.min()) / (s3_arr.max() - s3_arr.min())
+                s3_arr = np.ma.filled(s3_arr, 0)
+                arr_500[i,j,:,:] = s3_arr
+                arr_acc[j,:,:] = np.maximum(arr_acc[j,:,:], s3_arr)
+            for j in range(len(s3_bands_1k)):
+                s3_file_1k = s3_path + '/' + str(current_date)+'T17_S3.band' + s3_bands_1k[j] + '.tif'
+                s3_arr, s3_profile = self.read_tiff(s3_file_1k.replace('-', ''))
+
+                # s3_arr = (s3_arr-200)/(s3_arr.max()-200)
+
+
+                s3_arr = cv2.resize(s3_arr[0], (256, 256),
+                                    interpolation=cv2.INTER_LINEAR)
+                # ret, s3_arr = cv2.threshold(s3_arr, 200, 1000, cv2.THRESH_TOZERO)
+                s3_arr = np.nan_to_num(s3_arr)
+                s3_arr = np.ma.masked_equal(s3_arr, 0)
+                s3_arr = (s3_arr - s3_arr.min()) / (s3_arr.max() - s3_arr.min())
+                s3_arr = np.ma.filled(s3_arr, 0)
+
+                arr_500[i,j+3,:,:] = s3_arr
+                arr_acc[j+3,:,:] = np.maximum(arr_acc[j+1,:,:], s3_arr)
+
+            new_label_arr, label_profile = self.read_tiff(label_file)
+            new_label_arr = np.nan_to_num(new_label_arr)
+            new_label_arr = cv2.resize(new_label_arr[0], (256, 256),
+                                interpolation=cv2.INTER_LINEAR)
+            ret, new_label_arr = cv2.threshold(new_label_arr,0,1,cv2.THRESH_BINARY)
+            if i == 0:
+                label_arr = new_label_arr
+            else:
+                label_arr = np.logical_or(label_arr,new_label_arr)
+
+
+            modis_arr, modis_profile = self.read_tiff(modis_file_list[i])
+            modis_arr = np.nan_to_num(modis_arr)
+            for k in range(3):
+                arr_500[i, k+7, :, :] = cv2.resize(modis_arr[k,:,:], (256, 256),
+                                    interpolation=cv2.INTER_LINEAR)
+            arr_500[i, 10, :, :] = label_arr
+        plt.imshow(arr_acc[5,:,:])
+        plt.show()
+
+            # fig, ax = plt.subplots(1, 4)
+            #
+            # img = arr_500[i, 0:3, :, :].transpose((1,2,0))
+            # img = (img - img.min()) / (img.max() - img.min())
+            # ax[0].imshow(img[:, :])
+            #
+            # img = arr_500[i, 3:6, :, :].transpose((1,2,0))
+            # img = (img - img.min()) / (img.max() - img.min())
+            # ax[1].imshow(img[:, :])
+            #
+            # img = arr_500[i, 7:10, :, :].transpose((1,2,0))
+            # img = (img - img.min()) / (img.max() - img.min())
+            # ax[2].imshow(img[:, :])
+            #
+            # img = arr_500[i, 10, :, :]
+            # img = (img - img.min()) / (img.max() - img.min())
+            # ax[3].imshow(img[:, :])
+            # plt.savefig("dataset_inspection/proj2" +location+ str(i) + ".png", dpi=150)
+            # plt.show()
+
+        return arr_500
 
     def corp_tiff_to_same_size(self, location, reference_mode):
         s2_path = 'data/' + location + 'Sentinel2'
@@ -217,6 +277,164 @@ class PreprocessingService:
             gdal.Warp(goes_file, goes_file, outputBounds=(lon_low, lat_low, lon_high, lat_high))
         for goes_fire_file in goes_fire_file_list:
             gdal.Warp(goes_fire_file, goes_fire_file, outputBounds=(lon_low, lat_low, lon_high, lat_high))
+
+    def normalization(self, array):
+        n_channels = array.shape[0]-1
+        for i in range(n_channels):
+            nanmean = np.nanmean(array[i, :, :])
+            array[i, :, :] = np.nan_to_num(array[i, :, :], nan=nanmean)
+            array[i,:,:] = (array[i,:,:]-array[i,:,:].mean())/array[i,:,:].std()
+        return np.nan_to_num(array)
+
+    def dataset_generator_proj3(self, locations):
+        satellite = 'VIIRS_Day'
+        window_size = 3
+        ts_length = 10
+        stack_over_location=[]
+        save_path = 'data_train_proj3/'
+        n_channels = 5
+        if not os.path.exists(save_path):
+            os.mkdir(save_path)
+        for location in locations:
+            print(location)
+            data_path = 'data/' + location + '/' + satellite + '/'
+            file_list = glob(data_path+'/*.tif')
+            file_list.sort()
+            if len(file_list) % ts_length != 0:
+                num_sequence = len(file_list)//ts_length+1
+            else:
+                num_sequence = len(file_list) // ts_length
+            preprocessing = PreprocessingService()
+            array, _ = preprocessing.read_tiff(file_list[0])
+            padding = window_size // 2
+            array_stack = []
+            for j in range(num_sequence):
+                output_array = np.zeros(
+                    (10, (array.shape[1] - padding * 2) * (array.shape[2] - padding * 2), pow(window_size, 2) * n_channels + 1))
+                if j == num_sequence-1 and j != 0:
+                    file_list_size = len(file_list) % ts_length
+                else:
+                    file_list_size=ts_length
+                for i in range(file_list_size):
+                    file = file_list[i+j*10]
+                    array, _ = preprocessing.read_tiff(file)
+                    # pick up channels here
+                    # array = array[3:, :, :]
+                    array = self.normalization(array)
+
+                    for ix in range(padding, array.shape[1]-padding):
+                        for iy in range(padding, array.shape[2]-padding):
+                            idx = (ix-padding)*(array.shape[2]-padding*2)+iy-padding
+                            window = array[:n_channels, ix-(window_size-1)//2:ix+(window_size-1)//2+1, iy-(window_size-1)//2:iy+(window_size-1)//2+1].flatten()
+                            label = array[n_channels+1, ix, iy]
+                            # mask = array[n_channels+1, ix, iy]
+                            output_array[i, idx, :pow(window_size, 2) * n_channels] = window
+                            output_array[i, idx, pow(window_size, 2) * n_channels] = label > 0
+                            # output_array[i, idx, pow(window_size, 2) * n_channels+1] = mask > 0
+                    time_stamp = i
+                    shape = (array.shape[1]-padding*2, array.shape[2]-padding*2)
+                    plt.subplot(211)
+                    plt.imshow((output_array[time_stamp, :, 45].reshape(shape)-output_array[time_stamp, :, 45].reshape(shape).min())-(output_array[time_stamp, :, 45].reshape(shape).max()-output_array[time_stamp, :, 45].reshape(shape).min()))
+                    plt.subplot(212)
+                    plt.imshow((output_array[time_stamp, :, 30].reshape(shape)-output_array[time_stamp, :, 30].reshape(shape).min())-(output_array[time_stamp, :, 30].reshape(shape).max()-output_array[time_stamp, :, 30].reshape(shape).min()))
+                    plt.savefig('plt/'+location+str(i)+'.png')
+                    plt.show()
+                array_stack.append(output_array)
+            output_array_stacked = np.concatenate(array_stack, axis=1)
+            stack_over_location.append(output_array_stacked)
+        output_array_stacked_over_location = np.concatenate(stack_over_location, axis=1)
+        print(output_array_stacked_over_location.shape)
+        # output_array_stacked_over_location = self.normalization(output_array_stacked_over_location, n_channels)
+        file_name = 'proj3_test_5_channel.npy'
+        np.save(save_path+file_name, output_array_stacked_over_location.astype(np.float))
+        self.upload_to_gcloud(save_path+file_name)
+
+    def dataset_generator_proj3_image(self, locations, file_name, image_size=(224, 224)):
+        satellite = 'VIIRS_Day'
+        window_size = 3
+        ts_length = 10
+        stack_over_location=[]
+        save_path = 'data_train_proj3/'
+        n_channels = 5
+        if not os.path.exists(save_path):
+            os.mkdir(save_path)
+        for location in locations:
+            print(location)
+            data_path = 'data/' + location + '/' + satellite + '/'
+            file_list = glob(data_path+'/*.tif')
+            file_list.sort()
+            if len(file_list) % ts_length != 0:
+                num_sequence = len(file_list)//ts_length+1
+            else:
+                num_sequence = len(file_list) // ts_length
+            preprocessing = PreprocessingService()
+            array, _ = preprocessing.read_tiff(file_list[0])
+            padding = window_size // 2
+            array_stack = []
+            # th = [(350,335), (350,335), (350,335), (350,335), (350,335), (350,335), (335,335), (335,335), (340,335), (344,335)]
+            th = [(340,330), (337, 335), (335, 335), (335, 330), (335, 330), (330, 330), (330, 330), (330, 330), (330, 330), (330, 330)]
+            for j in range(num_sequence):
+                output_array = np.zeros((ts_length, n_channels+2, image_size[0], image_size[1]))
+                if j == num_sequence-1 and j != 0:
+                    file_list_size = len(file_list) % ts_length
+                else:
+                    file_list_size=ts_length
+                for i in range(file_list_size):
+                    file = file_list[i+j*10]
+                    array, _ = preprocessing.read_tiff(file)
+                    # pick up channels here
+                    # array = array[3:, :, :]
+                    th_i = th[i]
+                    # plt.subplot(231)
+                    # plt.imshow(array[3, :, :])
+                    af = np.zeros(array[3,:,:].shape)
+                    # Avoid direct modifing original array
+                    af[:,:] = np.logical_or(array[3,:,:] > th_i[0], array[4,:,:] > th_i[1])
+                    # af[np.logical_not(af[:,:])] = np.nan
+
+                    # plt.imshow(af, cmap='Reds', alpha=1)
+                    # plt.subplot(232)
+                    # plt.imshow(array[3, :, :])
+                    # plt.imshow(array[6, :, :], cmap='Reds', alpha=1)
+                    # plt.subplot(233)
+                    # plt.imshow(array[3, :, :])
+                    # plt.subplot(234)
+                    # plt.imshow(af)
+                    # plt.subplot(235)
+                    # plt.imshow(array[6, :, :])
+                    # plt.show()
+
+                    array = self.normalization(array)
+                    row_start=int(array.shape[1]*0.1)
+                    col_start=int(array.shape[2]*0)
+                    array = np.concatenate((array, af[np.newaxis,:,:]))
+                    array = array[:, row_start:row_start+image_size[0], col_start:col_start+image_size[1]]
+                    output_array[i,:n_channels,:array.shape[1],:array.shape[2]] = array[:n_channels, :, :]
+                    output_array[i,n_channels:n_channels+2,:array.shape[1],:array.shape[2]] = np.nan_to_num(array[n_channels+1:n_channels+3, :, :])
+                    plt.figure(figsize= (12, 4), dpi=80)
+                    plt.subplot(121)
+                    plt.imshow((output_array[i,3,:,:]-output_array[i,3,:,:].min())/(output_array[i,3,:,:].max()-output_array[i,3,:,:].min()))
+                    masked_img = np.ma.masked_where(output_array[i,6,:,:] == 0, output_array[i,6,:,:])
+                    plt.imshow(masked_img, interpolation='nearest')
+                    plt.subplot(122)
+                    plt.imshow((output_array[i, 3, :, :] - output_array[i, 3, :, :].min()) / (
+                                output_array[i, 3, :, :].max() - output_array[i, 3, :, :].min()))
+                    img = np.zeros((224, 224))
+                    img[:, :] = output_array[i, 5, :, :] > 0
+                    img[img == False] = np.nan
+                    plt.imshow(img , interpolation='nearest')
+                    # plt.savefig('plt_proj3_img/'+location+str(i)+'.png')
+                    plt.show()
+                array_stack.append(output_array)
+            output_array_stacked = np.stack(array_stack, axis=0)
+            stack_over_location.append(output_array_stacked)
+        output_array_stacked_over_location = np.concatenate(stack_over_location, axis=0)
+        print(output_array_stacked_over_location.shape)
+        # output_array_stacked_over_location = self.normalization(output_array_stacked_over_location, n_channels)
+
+        np.save(save_path+file_name, output_array_stacked_over_location.astype(np.float))
+        # self.upload_to_gcloud(save_path+file_name)
+
 
 
 

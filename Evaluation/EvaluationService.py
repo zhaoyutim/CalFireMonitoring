@@ -232,7 +232,6 @@ class EvaluationService:
                 eval_img_resize[5:-5, 5:-5] = eval_img
                 eval_img = eval_img_resize
             ret, eval_img = cv2.threshold(eval_img, 0, 1, cv2.THRESH_BINARY)
-            imsa
             plt.imshow(eval_img, cmap='Greys')
             plt.axis('off')
             plt.show()
@@ -291,7 +290,7 @@ class EvaluationService:
 
         predict_dataset = predict_dataset[:, :, :121]
         for i in range(predict_dataset.shape[1]):
-            ret, predict_dataset[:, i, :] = cv2.threshold(predict_dataset[:, i, :], 2, 100, cv2.THRESH_TOZERO)
+            ret, predict_dataset[:, i, :] = cv2.threshold(predict_dataset[:, i, :], 4, 100, cv2.THRESH_TOZERO)
             predict_dataset_mean = predict_dataset[:, i, :].mean()
             predict_dataset_std = predict_dataset[:, i, :].std()
             if predict_dataset_std == 0 and predict_dataset_mean == 0:
@@ -312,7 +311,7 @@ class EvaluationService:
         for j in range(predict_dataset.shape[1]):
             index_day = j
             lstm_conf = oupput_lstm[:, index_day, 0].reshape((x_size, y_size))
-            ret, lstm_conf = cv2.threshold(lstm_conf, 4, 100, cv2.THRESH_BINARY)
+            ret, lstm_conf = cv2.threshold(lstm_conf, lstm_conf.mean()+2*lstm_conf.std(), 100, cv2.THRESH_BINARY)
             output[:, :, j] = lstm_conf
             o_min = lstm_conf.min()
             o_max = lstm_conf.max()
@@ -320,9 +319,9 @@ class EvaluationService:
             lstm_conf = ((lstm_conf - o_min) * (1 / (o_max - o_min) * 255)).astype('uint8')
 
             imsave(output_path+'/'+location+'_'+time+'.png', lstm_conf)
-            # plt.imshow(lstm_conf, cmap='Greys')
-            # plt.title(time)
-            # plt.show()
+            plt.imshow(lstm_conf, cmap='Greys')
+            plt.title(time)
+            plt.show()
 
     def find(self, pattern, path):
         result = []

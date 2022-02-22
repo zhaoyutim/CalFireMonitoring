@@ -31,7 +31,7 @@ class Sentinel2:
             print(str(start_time))
             print(s2_clouds.first().clip(geometry).select('probability').reduceRegion(ee.Reducer.mean(), maxPixels=1e9).getInfo())
 
-        return s2a_cloud_masked_collection#.map(self.get_ratio).map(self.get_dnbr)
+        return s2a_cloud_masked_collection.map(self.get_comp)#.map(self.get_ratio).map(self.get_dnbr)
 
     def get_visualization_parameter(self):
         return {'min': -1, 'max':1, 'bands': ['index']}

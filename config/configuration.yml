@@ -5,32 +5,82 @@ rectangular_size: 0.5
 LNU_lighting_complex:
   longitude: -122.237303
   latitude: 38.593546
-  start: 2020-08-18
-  end: 2020-10-02
+  start: 2020-08-16
+  end: 2020-08-31
 
 SCU_lighting_complex:
   longitude: -121.4389
   latitude: 37.3526
-  start: 2020-08-14
-  end: 2020-09-17
+  start: 2020-08-16
+  end: 2020-09-02
 
 CZU_lighting_complex:
   longitude: -122.2801549
   latitude: 37.09736605
   start: 2020-08-16
-  end: 2020-09-22
+  end: 2020-08-26
 
 August_complex:
   longitude: -122.97
   latitude: 39.8686
-  start: 2020-08-17
-  end: 2020-11-12
+  start: 2020-08-15
+  end: 2020-09-16
 
 North_complex_fire:
-  longitude: -120.12
-  latitude: 39.69
+  longitude: -121.01
+  latitude: 39.78
   start: 2020-08-14
-  end: 2020-12-03
+  end: 2020-09-13
+
+River_fire:
+  longitude: -121.6146
+  latitude: 36.495
+  start: 2020-08-16
+  end: 2020-09-04
+
+Anonymous_fire1:
+  longitude: -118.501
+  latitude: 36.189
+
+Anonymous_fire2:
+  longitude: -105.651
+  latitude: 40.642
+
+Anonymous_fire3:
+  longitude: -117.688
+  latitude: 49.59
+
+Anonymous_fire4:
+  longitude: -108.5503
+  latitude: 39.4187
+
+Anonymous_fire5:
+  longitude: -110.6322
+  latitude: 40.601
+
+Anonymous_fire6:
+  longitude: -116.7698
+  latitude: 44.7444
+
+Anonymous_fire7:
+  longitude: -117.688
+  latitude: 49.59
+
+Anonymous_fire8:
+  longitude: -115.4528
+  latitude: 44.7903
+
+Hubo_fire:
+  longitude: -123.4029
+  latitude: 41.1121
+
+Anonymous_fire9:
+  longitude: -113.158
+  latitude: 48.1459
+
+Anonymous_fire10:
+  longitude: -120.5539
+  latitude: 42.5911
 
 Glass_fire:
   longitude: -122.496
@@ -41,8 +91,8 @@ Glass_fire:
 Beachie_wildfire:
   longitude: -122.138214
   latitude: 44.745123
-  start: 2020-09-02
-  end: 2020-09-14
+  start: 2020-08-17
+  end: 2020-09-15
 
 Beachie_wildfire_2:
   longitude: -122.23984
@@ -53,8 +103,8 @@ Beachie_wildfire_2:
 Holiday_farm_wildfire:
   longitude: -122.49
   latitude: 44.15
-  start: 2020-09-07
-  end: 2020-09-14
+  start: 2020-09-06
+  end: 2020-09-15
 
 Cold_spring_fire:
   longitude: -119.5725
@@ -72,13 +122,30 @@ creek_fire:
   longitude: -119.3
   latitude: 37.2
   start: 2020-09-05
-  end: 2020-10-08
+  end: 2020-09-16
+
+dixie_fire:
+  longitude: -121.419
+  latitude: 39.81
+  start: 2021-07-14
+  end: 2021-08-30
+lytton_fire:
+  longitude: -121.5659
+  latitude: 50.28
+  start: 2021-06-29
+  end: 2021-08-30
+sparks_lake_fire:
+  longitude: -120.79
+  latitude: 50.92
+  start: 2021-06-28
+  end: 2021-08-30
 
 hanninge_fire:
   longitude: 18.039856
   latitude: 59.143003
   start: 2020-05-31
   end: 2020-06-03
+
 blue_ridge_fire:
   longitude: -117.68
   latitude: 33.88
@@ -320,13 +387,13 @@ G82215:
   longitude: -121.0
   latitude: 57.4
   start: 2018-08-02
-  end: 2018-08-25
+  end: 2018-08-23
 
 R12068:
   longitude: -126.2
   latitude: 53.2
   start: 2018-09-03
-  end: 2018-09-30
+  end: 2018-09-29
 
 VA1787:
   longitude: -126.0
@@ -338,7 +405,7 @@ R21721:
   longitude: -126.5
   latitude: 54.0
   start: 2018-07-31
-  end: 2018-09-07
+  end: 2018-08-30
 
 R11498:
   longitude: -125.2
@@ -399,3 +466,9 @@ beachie_creek:
   latitude: 44.77
   start: 2020-08-17
   end: 2020-08-19
+
+swedish_fire:
+  longitude: 14.5155
+  latitude: 61.7976
+  start: 2018-07-12
+  end: 2018-07-18

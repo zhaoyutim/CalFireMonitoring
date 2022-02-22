@@ -31,6 +31,7 @@ from DataPreparation.satellites.MODIS import MODIS
 from DataPreparation.satellites.Sentinel1 import Sentinel1
 from DataPreparation.satellites.Sentinel2 import Sentinel2
 from DataPreparation.satellites.VIIRS import VIIRS
+from DataPreparation.satellites.VIIRS_Day import VIIRS_Day
 from DataPreparation.utils.EarthEngineMapClient import EarthEngineMapClient
 # Load configuration file
 from Preprocessing.PreprocessingService import PreprocessingService
@@ -40,22 +41,27 @@ with open("config/configuration.yml", "r", encoding="utf8") as f:
 
 
 class DatasetPrepareService:
-    def __init__(self, location):
+    def __init__(self, location, roi=None):
         self.location = location
         self.rectangular_size = config.get('rectangular_size')
         self.latitude = config.get(self.location).get('latitude')
         self.longitude = config.get(self.location).get('longitude')
         self.start_time = config.get(location).get('start')
-        self.end_time = config.get(location).get('end')
-        # self.start_time = datetime.date(2020, 9, 10)
-        # self.end_time = self.start_time + datetime.timedelta(days=2)
+        # self.end_time = config.get(location).get('end')
+        # self.start_time = datetime.date(2018, 7, 14)
+        # self.end_time = datetime.date(2018, 7, 18)
+        self.end_time = self.start_time + datetime.timedelta(days=10)
         # self.end_time = datetime.date.today()
 
         self.rectangular_size = config.get('rectangular_size')
-        self.geometry = ee.Geometry.Rectangle(
-            [self.longitude - self.rectangular_size, self.latitude - self.rectangular_size,
-             self.longitude + self.rectangular_size, self.latitude + self.rectangular_size])
-        self.scale_dict = {"GOES": 375, "GOES_FIRE": 375, "FIRMS": 1000, "Sentinel2": 375, "VIIRS": 375, "MODIS": 500, "Sentinel1_asc": 20, "Sentinel1_dsc":20}
+        if roi == None:
+            self.geometry = ee.Geometry.Rectangle(
+                [self.longitude - self.rectangular_size, self.latitude - self.rectangular_size,
+                 self.longitude + self.rectangular_size, self.latitude + self.rectangular_size])
+        else:
+            self.geometry = ee.Geometry.Rectangle(roi)
+
+        self.scale_dict = {"VIIRS_Day":375, "GOES": 375, "GOES_FIRE": 2000, "FIRMS": 500, "Sentinel2": 20, "VIIRS": 375, "MODIS": 500, "Sentinel1_asc": 20, "Sentinel1_dsc":20}
 
     def cast_to_uint8(self, image):
         return image.multiply(512).uint8()
@@ -84,6 +90,8 @@ class DatasetPrepareService:
             satellite_client = FIRMS()
         elif satellite == 'GOES_FIRE':
             satellite_client = GOES_FIRE()
+        elif satellite == 'VIIRS_Day':
+            satellite_client = VIIRS_Day()
         else:
             satellite_client = Landsat8()
         return satellite_client
@@ -140,13 +148,13 @@ class DatasetPrepareService:
             map_client.add_ee_layer(img.clip(self.geometry), vis_params, satellite + date_of_interest)
         return map_client
 
-    def visualizing_images_per_day(self, satellites):
+    def visualizing_images_per_day(self, satellites, time_dif):
         map_client = EarthEngineMapClient(self.location)
 
         dataset_pre = DatasetPrepareService(location=self.location)
-        time_dif = self.end_time - self.start_time
+        # time_dif = self.end_time - self.start_time
 
-        for i in range(time_dif.days):
+        for i in range(time_dif):
             date_of_interest = str(self.start_time + datetime.timedelta(days=i))
             for satellite in satellites:
                 img_collection, img_collection_as_gif = dataset_pre.prepare_daily_image(False, satellite=satellite,
@@ -187,12 +195,16 @@ class DatasetPrepareService:
         '''
 
         # Setup the task.
+        # size = img_coll.size().getInfo()
+        # img_coll = img_coll.toList(size)
+        # for i in range(size):
+            # img = ee.Image(img_coll.get(i))
         if satellite != 'GOES_every':
             img = img_coll.max().toFloat()
             image_task = ee.batch.Export.image.toCloudStorage(
                 image=img,
                 description='Image Export',
-                fileNamePrefix=self.location + satellite + '/' + "Cal_fire_" + self.location + satellite + '-' + index,
+                fileNamePrefix=self.location +'/' + satellite + '/' + index,
                 bucket=config.get('output_bucket'),
                 scale=self.scale_dict.get(satellite),
                 crs='EPSG:' + utm_zone,
@@ -290,9 +302,7 @@ class DatasetPrepareService:
         bucket = storage_client.bucket(bucket_name)
         blobs = bucket.list_blobs(prefix=prefix)
         for blob in blobs:
-            if blob.time_created.date() < datetime.date.today()-datetime.timedelta(days=1):
-                continue
-            filename = blob.name.replace('/', '_')
+            filename = blob.name.split('/')[2].replace('.tif', '')+'_'+blob.name.split('/')[1]+'.tif'
             blob.download_to_filename(destination_file_name + filename)
             print(
                 "Blob {} downloaded to {}.".format(
@@ -302,8 +312,8 @@ class DatasetPrepareService:
 
     def batch_downloading_from_gclound_training(self, satellites):
         for satellite in satellites:
-            blob_name = self.location + satellite + '/'
-            destination_name = 'data/' + self.location + satellite + '/'
+            blob_name = self.location + '/'+ satellite + '/'
+            destination_name = 'data/' + self.location + '/' + satellite + '/'
             dir_name = os.path.dirname(destination_name)
             if not os.path.exists(dir_name):
                 os.makedirs(dir_name)
@@ -311,7 +321,7 @@ class DatasetPrepareService:
 
     def batch_downloading_from_gclound_referencing(self, satellites):
         for satellite in satellites:
-            blob_name = self.location + satellite + '/'
+            blob_name = self.location + '/' + satellite + '/'
             destination_name = 'data/evaluate/' + self.location + '/reference/'
             dir_name = os.path.dirname(destination_name)
             if not os.path.exists(dir_name):
