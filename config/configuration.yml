@@ -1,6 +1,6 @@
 output_bucket: zhaoyutimtest
 
-rectangular_size: 0.5
+rectangular_size: 1
 
 LNU_lighting_complex:
   longitude: -122.237303
@@ -134,6 +134,7 @@ lytton_fire:
   latitude: 50.28
   start: 2021-06-29
   end: 2021-08-30
+
 sparks_lake_fire:
   longitude: -120.79
   latitude: 50.92
@@ -171,8 +172,8 @@ plateau_fire:
   end: 2017-07-30
 
 hanceville_fire:
-  longitude: -123.10
-  latitude: 51.56
+  longitude: -123.08
+  latitude: 51.98
   start: 2017-07-07
   end: 2017-07-30
 
@@ -306,7 +307,7 @@ carr_fire:
   longitude: -122.62
   latitude: 40.65
   start: 2018-07-23
-  end: 2018-07-25
+  end: 2018-08-25
 
 magee_fire:
   longitude: -123.22
@@ -330,7 +331,7 @@ tagish_lake_fire:
   longitude: -134.35
   latitude: 59.43
   start: 2019-08-03
-  end: 2019-08-10
+  end: 2019-08-18
 
 richter_creek_fire:
   longitude: -119.66
@@ -342,12 +343,12 @@ richter_mountain_fire:
   longitude: -119.70
   latitude: 49.06
   start: 2019-07-26
-  end: 2019-07-30
+  end: 2019-08-30
 
 Karbole_fire:
   longitude: 15.13
   latitude: 61.87
-  start: 2018-07-16
+  start: 2018-07-14
   end: 2018-08-10
 
 N71114:
@@ -470,5 +471,31 @@ beachie_creek:
 swedish_fire:
   longitude: 14.5155
   latitude: 61.7976
-  start: 2018-07-12
+  start: 2018-07-14
   end: 2018-07-18
+
+
+kincade_fire:
+  longitude: -122.78
+  latitude: 38.79
+  start: 2019-10-23
+  end: 2019-11-06
+
+walker_fire:
+  longitude: -120.68
+  latitude: 40.06
+  start: 2019-09-04
+  end: 2019-10-24
+
+
+thomas_fire:
+  longitude: -119.09
+  latitude: 34.42
+  start: 2017-12-04
+  end: 2017-12-14
+
+sydney_fire:
+  longitude: 150.116
+  latitude: -35.50
+  start: 2019-11-26
+  end: 2019-12-06
