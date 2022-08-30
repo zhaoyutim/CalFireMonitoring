@@ -1,13 +1,10 @@
 import ee
 import yaml
-import numpy as np
 
 from DataPreparation.DatasetPrepareService import DatasetPrepareService
 from Evaluation.EvaluationService import EvaluationService
-from FirmsProcessor.FirmsProcessor import FirmsProcessor
-from LowResSatellitesService.LowResSatellitesService import LowResSatellitesService
 from Preprocessing.PreprocessingService import PreprocessingService
-from Visualization.VisulizationService import VisualizationService
+from SentinelHubClient.LowResSatellitesService import LowResSatellitesService
 
 with open("config/configuration.yml", "r", encoding="utf8") as f:
     config = yaml.load(f, Loader=yaml.FullLoader)
@@ -23,20 +20,9 @@ if __name__ == '__main__':
 
     # locations = ['SCU_lighting_complex', 'CZU_lighting_complex']
     locations = ['swedish_fire'] #32723
-    # locations = ['creek_fire']
-    # locations = ['thomas_fire']
-    # locations = ['elephant_hill_fire', 'camp_fire', 'fraser_complex', 'chuckegg_creek_fire']
-    # locations = ['brazil_1214', 'brazil_668', 'brazil_675', 'brazil_1341', 'brazil_728']
-    # locations = ['August_complex']
-    # locations_16 = ['camp_fire', 'tubbs_fire', 'carr_fire']
-    # locations += ['christie_mountain', 'talbott_creek', 'Doctor_creek_fire']
-    # locations += ['R91947', 'R92033']
-    # locations += ['R21721', 'R11498']
-    # locations += ['magnum_fire', 'bighorn_fire', 'santiam_fire', 'holiday_farm_fire', 'slater_fire']
     generate_goes = False
     mode = 'viirs'
     preprocessing = PreprocessingService()
-    visualization = VisualizationService()
     eval = EvaluationService()
     lowres = LowResSatellitesService()
     dataset_proj2 = []
@@ -49,40 +35,32 @@ if __name__ == '__main__':
         # map_client = dataset_pre.visualizing_images_per_day(satellites, time_dif=5)
         # dataset_pre.generate_video_for_goes()
         # dataset_pre.generate_custom_gif(satellites)
-        # dataset_pre.evaluate_tiff_to_png(location)
-        # dataset_pre.label_tiff_to_png(location)
 
-        # label generation
+        # FIRMS progression generation (VIIRS/MODIS)
         # firmsProcessor = FirmsProcessor()
         # firmsProcessor.firms_generation_from_csv_to_tiff(config.get(location).get('start'), config.get(location).get('end'), location, 32610)
         # firmsProcessor.accumulation(location)
 
         # training phase
-        # preprocessing.corp_tiff_to_same_size(location, False)
-        # dataset_pre.firms_generation_from_csv_to_tiff(False, mode, '32610')
-        # dataset_pre.batch_downloading_from_gclound_training(satellites)
         # dataset_pre.download_dataset_to_gcloud(satellites, '32633', False)
+        # dataset_pre.batch_downloading_from_gclound_training(satellites)
+        # preprocessing.corp_tiff_to_same_size(location, False)
         # preprocessing.dataset_generator_proj1(location)
 
-
-        # lowres.fetch_imagery_from_sentinel_hub(location, ['S3'])
-        # dataset_proj2.append(preprocessing.dataset_generator_proj2(location, satellites))
-
-        # inferencing phase
+        # inference phase
+        # dataset_pre.download_goes_dataset_to_gcloud_every_hour(False, '32610', 'GOES')
         # dataset_pre.batch_downloading_from_gclound_referencing(['GOES'])
         # preprocessing.corp_tiff_to_same_size(location, True)
-        # eval.evaluate_mIoU(location, 'Sentinel2', ['FIRMS','GOES','GOES_FIRE'], s2_date = '2020-09-08')
-        # dataset_pre.download_goes_dataset_to_gcloud_every_hour(False, '32610', 'GOES')
-        # eval.reconstruct_trial5(location)
-        # eval.reference_trial5(location, True)
-        # eval.evaluate_and_generate_images(location)
-        preprocessing.dataset_generator_proj3_image_test(location, file_name = 'proj3_'+location+'_img.npy')
-        # preprocessing.reconstruct_tif_firmproj3(location)
 
-        # visualization
-        # visualization.scatter_plot(location, 'palsar')
-    # preprocessing.dataset_generator_proj3(locations, window_size=1)
-    # preprocessing.dataset_generator_proj3_image(locations, file_name = 'proj3_test_img.npy')
-    # preprocessing.dataset_visualization_proj3(locations)
-    # dataset_output = np.concatenate(dataset_proj2, axis=0)
-    # np.save('data/train/dataset_proj2.npy', dataset_output)
+        # Proj1 used functions for evaluation
+        # eval.reconstruct_proj1_output(location)
+        # eval.reference_proj1(location, True)
+        # eval.evaluate_and_generate_images(location)
+        # eval.evaluate_mIoU(location, 'Sentinel2', ['FIRMS','GOES','GOES_FIRE'], s2_date = '2020-09-08')
+
+        # Proj2 used functions
+        # preprocessing.dataset_generator_proj2_image_test(location, file_name ='proj3_' + location + '_img.npy')
+        # preprocessing.reconstruct_tif_proj2(location)
+    # Proj2 used functions
+    # preprocessing.dataset_generator_proj2(locations, window_size=1)
+    # preprocessing.dataset_generator_proj2_image(locations, file_name ='proj3_test_img.npy')

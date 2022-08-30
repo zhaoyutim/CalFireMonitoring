@@ -1,27 +1,14 @@
 import datetime
 import os
 import urllib
-from glob import glob
-from pathlib import Path
 from pprint import pprint
-
-from array2gif import write_gif
-from geetools import batch, tools, utils
 
 import cv2
 import ee
 import imageio
-import numpy as np
-import pandas as pd
-import rasterio
 import tensorflow as tf
 import yaml
-from geetools.utils import makeName
 from google.cloud import storage
-from osgeo import gdal
-from osgeo import osr
-from pyproj import Transformer
-from scipy.ndimage import gaussian_filter
 
 from DataPreparation.satellites.FIRM import FIRMS
 from DataPreparation.satellites.GOES import GOES
@@ -33,8 +20,8 @@ from DataPreparation.satellites.Sentinel2 import Sentinel2
 from DataPreparation.satellites.VIIRS import VIIRS
 from DataPreparation.satellites.VIIRS_Day import VIIRS_Day
 from DataPreparation.utils.EarthEngineMapClient import EarthEngineMapClient
+
 # Load configuration file
-from Preprocessing.PreprocessingService import PreprocessingService
 
 with open("config/configuration.yml", "r", encoding="utf8") as f:
     config = yaml.load(f, Loader=yaml.FullLoader)
@@ -366,203 +353,3 @@ class DatasetPrepareService:
         for filename in filenames:
             images.append(imageio.imread('images_after_processing/' + self.location + '/' + filename + '.jpg'))
         imageio.mimsave('images_after_processing/gif/' + '/' + self.location + '.gif', images, format='GIF', fps=1)
-
-    def firms_generation_from_csv_to_tiff(self, generate_goes, is_downsample, utm_zone, satellite='GOES'):
-        preprocessing = PreprocessingService()
-        time_dif = self.end_time - self.start_time
-        dataset_pre = DatasetPrepareService(location=self.location)
-        label_path = 'data/label/' + self.location + ' label' + '/'
-        if not os.path.exists(label_path):
-            os.mkdir(label_path)
-        for i in range(time_dif.days):
-            date_of_interest = str(self.start_time + datetime.timedelta(days=i))
-            path = Path('data/evaluate/'+self.location+'/reference')
-            file_list = glob(str(path / "*.tif"))
-            _, profile = preprocessing.read_tiff(file_list[0])
-            bbox = [profile.data.get('transform').column_vectors[2][0],
-                    profile.data.get('transform').column_vectors[2][0] +
-                    profile.data.get('transform').column_vectors[0][0] * profile.data.get('width'),
-                    profile.data.get('transform').column_vectors[2][1] +
-                    profile.data.get('transform').column_vectors[1][1] * profile.data.get('height'),
-                    profile.data.get('transform').column_vectors[2][1]]
-            transformer = Transformer.from_crs(int(utm_zone), 4326)
-            bot_left = transformer.transform(bbox[0], bbox[2])
-            top_right = transformer.transform(bbox[1], bbox[3])
-            lon = [bbox[0], bbox[1]]
-            lat = [bbox[2], bbox[3]]
-            if is_downsample == 'modis':
-                res = 1000
-                all_location = pd.read_csv('data/FIRMS/fire_nrt_M6_156697.csv')
-            elif is_downsample == 'viirs':
-                res = 375
-                # all_location = pd.read_csv('data/FIRMS/fire_nrt_J1V-C2_156698.csv')
-                # all_location = pd.read_csv('data/FIRMS/fire_archive_mid-2018-mid-2020.csv')
-
-                all_location = pd.read_csv('data/FIRMS/fire_nrt_V1_mid2020-end-2020.csv')
-            else:
-                res = 2000
-                all_location = pd.read_csv('data/FIRMS/fire_archive_V1_166189.csv')
-            xmin, ymin, xmax, ymax = [min(lon), min(lat), max(lon), max(lat)]
-            nx = int((xmax - xmin) // res)
-            ny = int((ymax - ymin) // res)
-
-            fire_data_filter_on_date_and_bbox = all_location[all_location.acq_date.eq(date_of_interest)
-                                                             & all_location.latitude.gt(bot_left[0])
-                                                             & all_location.latitude.lt(top_right[0])
-                                                             & all_location.longitude.gt(bot_left[1])
-                                                             & all_location.longitude.lt(top_right[1])]
-            day_pixel = fire_data_filter_on_date_and_bbox[fire_data_filter_on_date_and_bbox.daynight.eq('D')]
-            night_pixel = fire_data_filter_on_date_and_bbox[fire_data_filter_on_date_and_bbox.daynight.eq('N')]
-            daynight = fire_data_filter_on_date_and_bbox.daynight.unique()
-            transformer2 = Transformer.from_crs(4326, int(utm_zone))
-            # for l in range(daynight.shape[0]):
-            for time in range(len(fire_data_filter_on_date_and_bbox.acq_time.unique())):
-                timestamp_per_day = fire_data_filter_on_date_and_bbox.acq_time.unique()[time]
-                # if daynight[l] == 'D':
-                #     timestamp_per_day = day_pixel.acq_time.unique()[time]
-                # else:
-                #     timestamp_per_day = night_pixel.acq_time.unique()[time]
-                if generate_goes:
-                    time_stamp_start, time_stamp_end = self.convert_int_to_timestamp(timestamp_per_day, 3)
-                    img_collection, img_collection_as_gif = dataset_pre.prepare_daily_image(False, satellite=satellite,
-                                                                                            date_of_interest=date_of_interest,
-                                                                                            time_stamp_start=time_stamp_start,
-                                                                                            time_stamp_end=time_stamp_end)
-                    dataset_pre.download_image_to_gcloud(img_collection, satellite,
-                                                         date_of_interest + '{:04d}'.format(timestamp_per_day), utm_zone)
-                # fire_data_filter_on_timestamp = np.array(fire_data_filter_on_date_and_bbox[
-                #                                              fire_data_filter_on_date_and_bbox.daynight.eq(
-                #                                                  daynight[l])])
-                fire_data_filter_on_timestamp = np.array(fire_data_filter_on_date_and_bbox[fire_data_filter_on_date_and_bbox.acq_time.eq(timestamp_per_day)])
-                image_size = (ny, nx)
-                #  Create Each Channel
-                b1_pixels = np.zeros((image_size), dtype=np.float)
-                b2_pixels = np.zeros((image_size), dtype=np.float)
-                b3_pixels = np.zeros((image_size), dtype=np.float)
-                b4_pixels = np.zeros((image_size), dtype=np.float)
-
-                # coordination in images = (coord_in_crs - min_bbox) / resolution
-
-                for k in range(1, fire_data_filter_on_timestamp.shape[0]):
-                    record = fire_data_filter_on_timestamp[k]
-                    lon_point = transformer2.transform(record[0], record[1])[0]
-                    lat_point = transformer2.transform(record[0], record[1])[1]
-                    cord_x = int((lon_point - xmin) // res)
-                    cord_y = int((lat_point - ymin) // res)
-                    if cord_x >= nx or cord_y >= ny:
-                        continue
-                    b1_pixels[cord_y, cord_x] = max(b1_pixels[cord_y, cord_x], record[2])
-                    if record[8] == 'n':
-                        b2_pixels[cord_y, cord_x] = max(b2_pixels[cord_y, cord_x], 1)
-                    elif record[8] == 'h':
-                        b2_pixels[cord_y, cord_x] = max(b2_pixels[cord_y, cord_x], 1)
-                    else:
-                        b2_pixels[cord_y, cord_x] = max(b2_pixels[cord_y, cord_x], 1)
-                    b3_pixels[cord_y, cord_x] = max(b3_pixels[cord_y, cord_x], record[11])
-                    b4_pixels[cord_y, cord_x] = max(b4_pixels[cord_y, cord_x], record[12])
-
-                # Geotransform matrix: (top_left_lon, resolution_x, spin, top_left_lat, resolution_y, spin)
-                geotransform = (xmin, res, 0, ymin, 0, res)
-
-                # create the n-band raster file
-                if is_downsample:
-                    dst_ds = gdal.GetDriverByName('GTiff').Create(
-                        'data/label/' + self.location + ' label' + '/' + "Cal_fire_" + self.location + 'FIRMS' + '-' + str(
-                            date_of_interest) + '{:04d}'.format(timestamp_per_day) + '.tif', image_size[1],
-                        image_size[0], 4, gdal.GDT_Float64)
-                else:
-                    dst_ds = gdal.GetDriverByName('GTiff').Create(
-                        'data/label/' + self.location + ' label' + '/' + "Cal_fire_" + self.location + 'FIRMS' + '-' + str(
-                            date_of_interest) + '{:04d}'.format(timestamp_per_day) + '.tif', image_size[1], image_size[0], 4,
-                        gdal.GDT_Float64)
-
-                # b1_pixels = gaussian_filter(b1_pixels, sigma=1, order=0)
-                # b2_pixels = gaussian_filter(b2_pixels, sigma=1, order=0)
-                # b3_pixels = gaussian_filter(b3_pixels, sigma=1, order=0)
-                # b4_pixels = gaussian_filter(b4_pixels, sigma=1, order=0)
-                dst_ds.SetGeoTransform(geotransform)  # specify coords
-                srs = osr.SpatialReference()  # establish encoding
-                srs.ImportFromEPSG(int(utm_zone))  # WGS84 lat/long
-                dst_ds.SetProjection(srs.ExportToWkt())  # export coords to file
-                dst_ds.GetRasterBand(1).WriteArray(b1_pixels)  # write r-band to the raster
-                dst_ds.GetRasterBand(2).WriteArray(b2_pixels)  # write g-band to the raster
-                dst_ds.GetRasterBand(3).WriteArray(b3_pixels)  # write b-band to the raster
-                dst_ds.GetRasterBand(4).WriteArray(b4_pixels)  # write b-band to the raster
-                dst_ds.FlushCache()  # write to disk
-                dst_ds = None
-
-    def label_tiff_to_png(self, location):
-        data_path = 'data/progression/'+location
-        data_path = Path(data_path)
-        if not os.path.exists(data_path):
-            os.mkdir(data_path)
-        data_file_list = glob(str(data_path / "*.tif"))
-        data_file_list.sort()
-        count=0
-        # background_path = 'data/png/'+location+'_sentinel2.png'
-        # with rasterio.open(background_path, 'r') as reader:
-        #     background_as_array = reader.read()
-        for file in data_file_list:
-            time = file[-14:-4]
-            with rasterio.open(file, 'r') as reader:
-                tif_as_array = reader.read()
-            output_image = np.rot90(tif_as_array[0, :, :], 2)
-            output_image = np.flip(output_image, axis=1)
-            # output_image = cv2.resize(output_image, (background_as_array.shape[2], background_as_array.shape[1]), interpolation=cv2.INTER_CUBIC)
-            output_image = ((output_image - output_image.min()) * (1 / (output_image.max() - output_image.min()) * 255)).astype(
-                'uint8')
-            # output_three_channel = np.zeros((output_image.shape[0], output_image.shape[1], 4))
-            # output_three_channel[:, :, 0] = output_image
-            # output_three_channel[:, :, 1] = np.zeros((output_image.shape[0], output_image.shape[1]))
-            # output_three_channel[:, :, 2] = np.zeros((output_image.shape[0], output_image.shape[1]))
-            #
-            # # ret,alpha = cv2.threshold(output_image,0,255,cv2.THRESH_BINARY)
-            # output_three_channel[:, :, 3] = output_image
-
-            output_three_channel = np.zeros((output_image.shape[0], output_image.shape[1]))
-            output_three_channel[:, :] = output_image
-
-            # cv2.putText(output_three_channel, location+' ' + file.replace('data/label/blue_ridge_fire label/Cal_fire_blue_ridge_fireGOES-','').replace('3_downsampled.tif','')[:-2]+':'+file.replace('data/label/blue_ridge_fire label/Cal_fire_blue_ridge_fireGOES-','').replace('3_downsampled.tif','')[-2:] , (400, 70),
-            #             cv2.FONT_HERSHEY_SIMPLEX,
-            #             1, (255, 255, 255, 255), 2, cv2.LINE_AA)
-            imageio.imsave('data/png/'+location+time+'.png', output_three_channel)
-            count += 1
-
-
-    def evaluate_tiff_to_png(self, location):
-        data_path = 'data/evaluate/'+location+'/recon'
-        data_path = Path(data_path)
-        if not os.path.exists(data_path):
-            os.mkdir(data_path)
-        data_file_list = glob(str(data_path / "*.tif"))
-        data_file_list.sort()
-
-        background_path = 'data/png/'+location+'_sentinel2.png'
-        with rasterio.open(background_path, 'r') as reader:
-            background_as_array = reader.read()
-        count=0
-        output_gif = []
-        for file in data_file_list:
-            with rasterio.open(file, 'r') as reader:
-                tif_as_array = reader.read()
-            output_image = np.rot90(tif_as_array[0, :, :], 2)
-            output_image = np.flip(output_image, axis=1)
-            output_image = cv2.resize(output_image, (background_as_array.shape[2], background_as_array.shape[1]), interpolation=cv2.INTER_CUBIC)
-            output_image = ((output_image - output_image.min()) * (1 / (output_image.max() - output_image.min()) * 255)).astype(
-                'uint8')
-            output_three_channel = np.zeros((output_image.shape[0], output_image.shape[1], 4))
-            output_three_channel[:, :, 0] = output_image
-            output_three_channel[:, :, 1] = np.zeros((output_image.shape[0], output_image.shape[1]))
-            output_three_channel[:, :, 2] = np.zeros((output_image.shape[0], output_image.shape[1]))
-
-            # ret,alpha = cv2.threshold(output_image,0,255,cv2.THRESH_BINARY)
-            output_three_channel[:, :, 3] = output_image
-
-            cv2.putText(output_three_channel, location+' ' + str(self.start_time + datetime.timedelta(days=count / 24)) + " {:02d}:00".format(count % 24), (400, 70),
-                        cv2.FONT_HERSHEY_SIMPLEX,
-                        1, (255, 255, 255, 255), 2, cv2.LINE_AA)
-            imageio.imsave('data/png/'+location+str(count)+'.png', output_three_channel)
-            count += 1
-            output_gif.append(output_three_channel)
-        # write_gif(output_gif, 'data/png/'+location+'.gif', fps=1)
-        # imageio.mimsave('data/png/'+location+'.gif', output_gif, format='GIF', fps=1)

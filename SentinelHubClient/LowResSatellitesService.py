@@ -8,13 +8,13 @@ from sentinelhub import SHConfig, SentinelHubRequest, DataCollection, MimeType, 
     SentinelHubDownloadClient
 import matplotlib.pyplot as plt
 
-from LowResSatellitesService.Satellites.MODIS import MODIS
-from LowResSatellitesService.Satellites.Sentinel3 import Sentinel3
+from SentinelHubClient.Satellites.MODIS import MODIS
+from SentinelHubClient.Satellites.Sentinel3 import Sentinel3
 
 
 class LowResSatellitesService:
     def __init__(self):
-        with open("LowResSatellitesService/secrets.yaml", "r", encoding="utf8") as f:
+        with open("SentinelHubClient/secrets.yaml", "r", encoding="utf8") as f:
             self.secret = yaml.load(f, Loader=yaml.FullLoader)
         with open("config/configuration.yml", "r", encoding="utf8") as f:
             self.fire_locations = yaml.load(f, Loader=yaml.FullLoader)
