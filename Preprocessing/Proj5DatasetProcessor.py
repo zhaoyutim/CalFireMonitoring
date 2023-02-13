@@ -13,9 +13,9 @@ from Preprocessing.PreprocessingService import PreprocessingService
 with open("config/configuration.yml", "r", encoding="utf8") as f:
     config = yaml.load(f, Loader=yaml.FullLoader)
 
-class Proj2DatasetProcessor(PreprocessingService):
+class Proj5DatasetProcessor(PreprocessingService):
 
-    def reconstruct_tif_proj2(self, location, satellite='VIIRS_Day', image_size=(224, 224)):
+    def reconstruct_tif_proj5(self, location, satellite='VIIRS_Day', image_size=(224, 224)):
         data_path = 'data/' + location + '/' + satellite + '/'
         file_list = glob(data_path + '/*.tif')
         file_list.sort()
@@ -51,13 +51,13 @@ class Proj2DatasetProcessor(PreprocessingService):
             self.write_tiff(save_path + location + '_' + str(current_date) + '.tif',
                             output_array_t[np.newaxis, :, :], new_profile)
 
-    def dataset_generator_proj2_image(self, locations, file_name, image_size=(224, 224)):
+    def dataset_generator_proj5_image(self, locations, file_name, image_size=(224, 224)):
         satellite = 'VIIRS_Day'
-        window_size = 3
+        window_size = 1
         ts_length = 10
         stack_over_location = []
-        save_path = 'data_train_proj2/'
-        n_channels = 5
+        save_path = 'data_train_proj5/'
+        n_channels = 6
         if not os.path.exists(save_path):
             os.mkdir(save_path)
         for location in locations:
@@ -71,12 +71,10 @@ class Proj2DatasetProcessor(PreprocessingService):
                 num_sequence = len(file_list) // ts_length
             preprocessing = PreprocessingService()
             array, _ = preprocessing.read_tiff(file_list[0])
-            padding = window_size // 2
             array_stack = []
-            th = [(350,335), (350,335), (350,335), (350,335), (350,335), (350,335), (335,335), (335,335), (340,335), (344,335)]
-            # th = [(340,330), (337, 335), (335, 335), (335, 330), (335, 330), (330, 330), (330, 330), (330, 330), (330, 330), (330, 330)]
             for j in range(num_sequence):
-                output_array = np.zeros((ts_length, n_channels + 2, image_size[0], image_size[1]))
+                output_array = np.zeros((ts_length, n_channels, image_size[0], image_size[1]))
+                output_label= np.zeros((ts_length, image_size[0], image_size[1]))
                 if j == num_sequence - 1 and j != 0:
                     file_list_size = len(file_list) % ts_length
                 else:
@@ -84,62 +82,42 @@ class Proj2DatasetProcessor(PreprocessingService):
                 for i in range(file_list_size):
                     file = file_list[i + j * 10]
                     array, _ = preprocessing.read_tiff(file)
-                    # pick up channels here
-                    # array = array[3:, :, :]
-                    th_i = th[i]
-                    # plt.subplot(231)
-                    # plt.imshow(array[3, :, :])
-                    af = np.zeros(array[3, :, :].shape)
-                    # Avoid direct modifing original array
-                    af[:, :] = np.logical_or(array[3, :, :] > th_i[0], array[4, :, :] > th_i[1])
-                    # af[np.logical_not(af[:,:])] = np.nan
 
-                    # plt.imshow(af, cmap='Reds', alpha=1)
-                    # plt.subplot(232)
-                    # plt.imshow(array[3, :, :])
-                    # plt.imshow(array[6, :, :], cmap='Reds', alpha=1)
-                    # plt.subplot(233)
-                    # plt.imshow(array[3, :, :])
-                    # plt.subplot(234)
-                    # plt.imshow(af)
-                    # plt.subplot(235)
-                    # plt.imshow(array[6, :, :])
-                    # plt.show()
+                    img = np.concatenate([array[:5,:,:], array[[6],:,:]], axis=0)
+                    ba_img = np.concatenate([array[[6],:,:], array[[1],:,:], array[[0],:,:]], axis=0)
+                    label = array[8, :, :]
+                    af= array[7,:,:]
 
-                    array = self.standardization(array)
-                    row_start = int(array.shape[1] * 0.35)
-                    col_start = int(array.shape[2] * 0.35)
-                    array = np.concatenate((array, af[np.newaxis, :, :]))
-                    array = array[:, row_start:row_start + image_size[0], col_start:col_start + image_size[1]]
-                    output_array[i, :n_channels, :array.shape[1], :array.shape[2]] = array[:n_channels, :, :]
-                    output_array[i, n_channels:n_channels + 2, :array.shape[1], :array.shape[2]] = np.nan_to_num(
-                        array[n_channels + 1:n_channels + 3, :, :])
+                    img = self.standardization(img)
+                    row_start = int(img.shape[1] * 0.35)
+                    col_start = int(img.shape[2] * 0.35)
+
+                    img = img[:, row_start:row_start + image_size[0], col_start:col_start + image_size[1]]
+                    label = label[row_start:row_start + image_size[0], col_start:col_start + image_size[1]]
+                    af = af[row_start:row_start + image_size[0], col_start:col_start + image_size[1]]
+                    ba_img = np.nan_to_num(ba_img[:, row_start:row_start + image_size[0], col_start:col_start + image_size[1]])
+                    output_array[i, :, :, :] = img[:, :, :]
+                    output_label[i, :, :] = label
+
                     plt.figure(figsize=(12, 4), dpi=80)
-                    plt.subplot(121)
-                    plt.imshow((output_array[i, 3, :, :] - output_array[i, 3, :, :].min()) / (
-                            output_array[i, 3, :, :].max() - output_array[i, 3, :, :].min()))
-                    masked_img = np.ma.masked_where(output_array[i, 6, :, :] == 0, output_array[i, 6, :, :])
-                    plt.imshow(masked_img, interpolation='nearest')
-                    plt.subplot(122)
-                    plt.imshow((output_array[i, 3, :, :] - output_array[i, 3, :, :].min()) / (
-                            output_array[i, 3, :, :].max() - output_array[i, 3, :, :].min()))
-                    img = np.zeros((224, 224))
-                    img[:, :] = output_array[i, 5, :, :] > 0
-                    img[img == False] = np.nan
-                    plt.imshow(img, interpolation='nearest')
-                    # plt.savefig('plt_proj2_img/'+location+str(i)+'.png')
+                    plt.subplot(131)
+                    plt.imshow(self.normalization(ba_img).transpose((1,2,0)))
+                    plt.imshow(np.where(np.isnan(label), np.nan, 1), cmap='hsv', interpolation='nearest', alpha=1)
+                    plt.subplot(132)
+                    plt.imshow(self.normalization(ba_img).transpose((1,2,0)))
+                    plt.imshow(np.where(np.isnan(af), np.nan, 1), cmap='hsv', interpolation='nearest', alpha=1)
+                    plt.subplot(133)
+                    plt.imshow(self.normalization(ba_img).transpose((1,2,0)))
                     plt.show()
                 array_stack.append(output_array)
             output_array_stacked = np.stack(array_stack, axis=0)
             stack_over_location.append(output_array_stacked)
         output_array_stacked_over_location = np.concatenate(stack_over_location, axis=0)
         print(output_array_stacked_over_location.shape)
-        # output_array_stacked_over_location = self.normalization(output_array_stacked_over_location, n_channels)
 
         np.save(save_path + file_name, output_array_stacked_over_location.astype(np.float))
-        # self.upload_to_gcloud(save_path+file_name)
 
-    def dataset_generator_proj2_image_test(self, location, file_name, image_size=(224, 224)):
+    def dataset_generator_proj5_image_test(self, location, file_name, image_size=(224, 224)):
         satellite = 'VIIRS_Day'
         window_size = 3
         ts_length = 10

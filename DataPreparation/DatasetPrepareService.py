@@ -1,16 +1,20 @@
 import datetime
 import os
 import urllib
+from glob import glob
 from pprint import pprint
 
 import cv2
 import ee
 import imageio
+import numpy as np
 import tensorflow as tf
 import yaml
 from google.cloud import storage
+from matplotlib import pyplot as plt
 
 from DataPreparation.satellites.FIRM import FIRMS
+from DataPreparation.satellites.FirePred import FirePred
 from DataPreparation.satellites.GOES import GOES
 from DataPreparation.satellites.GOES_FIRE import GOES_FIRE
 from DataPreparation.satellites.Landsat8 import Landsat8
@@ -20,6 +24,7 @@ from DataPreparation.satellites.Sentinel2 import Sentinel2
 from DataPreparation.satellites.VIIRS import VIIRS
 from DataPreparation.satellites.VIIRS_Day import VIIRS_Day
 from DataPreparation.utils.EarthEngineMapClient import EarthEngineMapClient
+from Preprocessing.PreprocessingService import PreprocessingService
 
 # Load configuration file
 
@@ -48,7 +53,7 @@ class DatasetPrepareService:
         else:
             self.geometry = ee.Geometry.Rectangle(roi)
 
-        self.scale_dict = {"VIIRS_Day":375, "GOES": 375, "GOES_FIRE": 2000, "FIRMS": 500, "Sentinel2": 20, "VIIRS": 375, "MODIS": 500, "Sentinel1_asc": 20, "Sentinel1_dsc":20}
+        self.scale_dict = {"VIIRS_Day":375, "GOES": 375, "GOES_FIRE": 2000, "FIRMS": 500, "Sentinel2": 20, "VIIRS": 375, "MODIS": 500, "Sentinel1_asc": 20, "Sentinel1_dsc":20, "FirePred":500}
 
     def cast_to_uint8(self, image):
         return image.multiply(512).uint8()
@@ -79,6 +84,8 @@ class DatasetPrepareService:
             satellite_client = GOES_FIRE()
         elif satellite == 'VIIRS_Day':
             satellite_client = VIIRS_Day()
+        elif satellite == 'FirePred':
+            satellite_client = FirePred()
         else:
             satellite_client = Landsat8()
         return satellite_client
@@ -195,7 +202,7 @@ class DatasetPrepareService:
                 bucket=config.get('output_bucket'),
                 scale=self.scale_dict.get(satellite),
                 crs='EPSG:' + utm_zone,
-                maxPixels=1e9,
+                maxPixels=1e13,
                 # fileDimensions=256,
                 # fileFormat='TFRecord',
                 region=self.geometry.toGeoJSON()['coordinates'],
@@ -216,13 +223,13 @@ class DatasetPrepareService:
                                                                   bucket=config.get('output_bucket'),
                                                                   scale=self.scale_dict.get(satellite),
                                                                   crs='EPSG:32610',
-                                                                  maxPixels=1e9,
+                                                                  maxPixels=1e13,
                                                                   # fileDimensions=256,
                                                                   # fileFormat='TFRecord',
                                                                   region=self.geometry.toGeoJSON()['coordinates']
                                                                   )
                 image_task.start()
-                print('Start with image task (id: {}).'.format(image_task.id))
+                print('Start with image task (id: {}).'.format(image_task.id)+index)
                 n += 1
 
     def download_collection_as_video(self, img_as_gif_collection, satellite, date):
@@ -265,18 +272,20 @@ class DatasetPrepareService:
         filenames = []
         time_dif = self.end_time - self.start_time
 
-        for i in range(time_dif.days):
+        for i in range(3):
             date_of_interest = str(self.start_time + datetime.timedelta(days=i))
             for start_hour in range(0, 24):
-                img_collection, img_collection_as_gif = self.prepare_daily_image(download_images_as_jpeg_locally,
-                                                                                        satellite=satellite,
-                                                                                        date_of_interest=date_of_interest,
-                                                                                        time_stamp_start="{:02d}:00".format(start_hour),
-                                                                                        time_stamp_end="{:02d}:59".format(start_hour)
-                                                                                        )
-                max_img = img_collection.max()
-                if len(max_img.getInfo().get('bands')) != 0:
-                    self.download_image_to_gcloud(img_collection, satellite, date_of_interest + "{:02d}:00".format(start_hour), utm_zone)
+                for minute in range(0, 60, 15):
+                    end_minute = minute + 14
+                    img_collection, img_collection_as_gif = self.prepare_daily_image(download_images_as_jpeg_locally,
+                                                                                            satellite=satellite,
+                                                                                            date_of_interest=date_of_interest,
+                                                                                            time_stamp_start="{:02d}:{:02d}".format(start_hour, minute),
+                                                                                            time_stamp_end="{:02d}:{:02d}".format(start_hour, end_minute)
+                                                                                            )
+                    max_img = img_collection.max()
+                    if len(max_img.getInfo().get('bands')) != 0:
+                        self.download_image_to_gcloud(img_collection, satellite, date_of_interest + "{:02d}:{:02d}".format(start_hour, minute), utm_zone)
         if download_images_as_jpeg_locally:
             images = []
             for filename in filenames:
@@ -328,28 +337,60 @@ class DatasetPrepareService:
             self.download_collection_as_video(img_collection_as_gif, satellite, date_of_interest)
 
     def generate_custom_gif(self, satellites):
+        path = os.path.join('images_for_gif', self.location)
+        file_list = glob(path+'/*.png')
+        file_list.sort()
+        images=[]
+        for filename in file_list:
+            img = imageio.imread(filename)
+            goes_resized = cv2.resize(img, (450, 500), interpolation=cv2.INTER_LINEAR)
+            images.append(goes_resized)
+        for fps in [5, 10]:
+            imageio.mimsave('images_after_processing/' + self.location + 'fps'+str(fps)+'.gif', images, format='GIF', fps=fps)
+
+    def tif_to_png(self, satellites):
         start_time = config.get(self.location).get('start')
-        # end_time = config.get(location).get('end')
-        end_time = datetime.date.today()
-        filenames = []
-        time_dif = end_time - start_time
+        end_time = config.get(self.location).get('end')
+        for satellite in satellites:
+            # path = os.path.join('data/', self.location, satellite)
+            path = os.path.join('data/evaluate/',self.location, 'reference')
+            file_list = glob(os.path.join(path, '*.tif'))
+            file_list.sort()
+            preprocessing = PreprocessingService()
+            for i, file in enumerate(file_list):
+                date_of_interest = file.split('/')[-1].split('_')[0]
+                array, _ = preprocessing.read_tiff(file)
+                img = np.zeros((array.shape[1], array.shape[2], 3))
+                for j in range(3):
+                    img[:,:,2-j] = (array[j,:,:]-array[j,:,:].min())/(array[j,:,:].max()-array[j,:,:].min())*255.0
+                cv2.putText(img, self.location + '-' + satellite + '-' + str(date_of_interest), (array.shape[2]//2-220, 30),
+                            cv2.FONT_HERSHEY_SIMPLEX,
+                            0.7, (0, 0, 255), 2, cv2.LINE_AA)
+                cv2.imwrite('images_for_gif/' + self.location +'/'+date_of_interest+ '.png', img)
 
-        for i in range(time_dif.days):
-            date_of_interest = str(start_time + datetime.timedelta(days=i))
-            for satellite in satellites:
-                if os.path.isfile('images_for_gif/' + self.location + '/' + satellite + str(date_of_interest) + '.jpg'):
-                    filenames.append(satellite + str(date_of_interest))
-
-                if os.path.isfile('images_for_gif/' + self.location + '/' + satellite + str(date_of_interest) + '.jpg'):
-                    bk_img = cv2.imread(
-                        'images_for_gif/' + self.location + '/' + satellite + str(date_of_interest) + '.jpg')
-                    cv2.putText(bk_img, self.location + '-' + satellite + '-' + str(date_of_interest), (150, 30),
-                                cv2.FONT_HERSHEY_SIMPLEX,
-                                0.7, (255, 255, 255), 2, cv2.LINE_AA)
-                    cv2.imwrite('images_after_processing/' + self.location + '/' + satellite + str(
-                        date_of_interest) + '.jpg', bk_img)
-                    filenames.append(satellite + str(date_of_interest))
-        images = []
-        for filename in filenames:
-            images.append(imageio.imread('images_after_processing/' + self.location + '/' + filename + '.jpg'))
-        imageio.mimsave('images_after_processing/gif/' + '/' + self.location + '.gif', images, format='GIF', fps=1)
+    def tif_to_png_agg(self, satellites):
+        start_time = config.get(self.location).get('start')
+        end_time = config.get(self.location).get('end')
+        for satellite in satellites:
+            for time in range(3):
+                date_of_interest = str(self.start_time + datetime.timedelta(days=time))
+                # path = os.path.join('data/', self.location, satellite)
+                # path = os.path.join('data/evaluate/',self.location, 'reference')
+                path = os.path.join('data/',self.location, satellite, str(date_of_interest))
+                file_list = glob(os.path.join(path, '*.tif'))
+                file_list.sort()
+                preprocessing = PreprocessingService()
+                array = []
+                for i, file in enumerate(file_list):
+                    date_of_interest = file.split('/')[-1].split('_')[0]
+                    array_i, _ = preprocessing.read_tiff(file)
+                    array.append(array_i)
+                array=np.stack(array, axis=0)
+                array = np.mean(array, axis=0)
+                img = np.zeros((array.shape[1], array.shape[2], 3))
+                for j in range(3):
+                    img[:,:,2-j] = (array[j,:,:]-array[j,:,:].min())/(array[j,:,:].max()-array[j,:,:].min())*255.0
+                cv2.putText(img, self.location + '-' + satellite + '-' + str(date_of_interest), (array.shape[2]//2-220, 30),
+                            cv2.FONT_HERSHEY_SIMPLEX,
+                            0.7, (0, 0, 255), 2, cv2.LINE_AA)
+                cv2.imwrite('images_for_gif/' + self.location +'/'+date_of_interest+ '.png', img)

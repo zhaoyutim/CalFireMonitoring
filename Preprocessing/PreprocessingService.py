@@ -14,12 +14,18 @@ class PreprocessingService:
     def down_sampling(self, input_arr):
         return np.mean(input_arr)
 
-    def normalization(self, array):
-        n_channels = array.shape[0]-2
+    def standardization(self, array):
+        n_channels = array.shape[0]
         for i in range(n_channels):
             nanmean = np.nanmean(array[i, :, :])
             array[i, :, :] = np.nan_to_num(array[i, :, :], nan=nanmean)
             array[i,:,:] = (array[i,:,:]-array[i,:,:].mean())/array[i,:,:].std()
+        return np.nan_to_num(array)
+
+    def normalization(self, array):
+        n_channels = array.shape[0]
+        for i in range(n_channels):
+            array[i,:,:] = (array[i,:,:]-np.nanmin(array[i,:,:]))/(np.nanmax(array[i,:,:])-np.nanmin(array[i,:,:]))
         return np.nan_to_num(array)
 
     def read_tiff(self, file_path):

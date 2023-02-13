@@ -48,7 +48,7 @@ class GOES16:
         c15 = image.select('CMI_C15')
         mask = c02.lt(0.02)
         mask2 = c15.lt(250)
-        bands = []
-        index = c07.subtract(c14).rename('index')
-        bands.append(index)
+        bands = [c07, c14, c15]
+        # index = c07.subtract(c14).rename('index')
+        # bands.append(index)
         return ee.Image(ee.Image(bands).copyProperties(image, image.propertyNames()))
