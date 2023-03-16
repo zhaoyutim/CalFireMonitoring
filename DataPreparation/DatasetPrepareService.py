@@ -8,6 +8,7 @@ import cv2
 import ee
 import imageio
 import numpy as np
+import pandas as pd
 import tensorflow as tf
 import yaml
 from google.cloud import storage
@@ -31,21 +32,30 @@ from Preprocessing.PreprocessingService import PreprocessingService
 with open("config/configuration.yml", "r", encoding="utf8") as f:
     config = yaml.load(f, Loader=yaml.FullLoader)
 
-
+year = '2020'
+filename = 'roi/us_fire_' + year + '_out.csv'
+df = pd.read_csv(filename)
+df = df.sort_values(by=['Id'])
+ids, start_dates, end_dates, lons, lats = df['Id'].values.astype(str), df['start_date'].values.astype(str), df[
+    'end_date'].values.astype(str), df['lon'].values.astype(float), df['lat'].values.astype(float)
 class DatasetPrepareService:
-    def __init__(self, location, roi=None):
+    def __init__(self, location, rectangular_size, latitude, longitude, start_time, end_time, roi=None):
         self.location = location
-        self.rectangular_size = config.get('rectangular_size')
-        self.latitude = config.get(self.location).get('latitude')
-        self.longitude = config.get(self.location).get('longitude')
-        self.start_time = config.get(location).get('start')
+        # self.rectangular_size = config.get('rectangular_size')
+        # self.latitude = config.get(self.location).get('latitude')
+        # self.longitude = config.get(self.location).get('longitude')
+        # self.start_time = config.get(location).get('start')
         # self.end_time = config.get(location).get('end')
+        self.rectangular_size = rectangular_size
+        self.latitude = latitude
+        self.longitude = longitude
+        self.start_time = start_time
+        self.end_time = end_time
         # self.start_time = datetime.date(2018, 7, 14)
         # self.end_time = datetime.date(2018, 7, 18)
-        self.end_time = self.start_time + datetime.timedelta(days=10)
+        # self.end_time = self.start_time + datetime.timedelta(days=10)
         # self.end_time = datetime.date.today()
-
-        self.rectangular_size = config.get('rectangular_size')
+        # self.rectangular_size = config.get('rectangular_size')
         if roi == None:
             self.geometry = ee.Geometry.Rectangle(
                 [self.longitude - self.rectangular_size, self.latitude - self.rectangular_size,
@@ -252,9 +262,9 @@ class DatasetPrepareService:
     def download_dataset_to_gcloud(self, satellites, utm_zone, download_images_as_jpeg_locally):
         filenames = []
         time_dif = self.end_time - self.start_time
-
         for i in range(time_dif.days):
             date_of_interest = str(self.start_time + datetime.timedelta(days=i))
+            print(date_of_interest)
             for satellite in satellites:
                 img_collection, img_collection_as_gif = self.prepare_daily_image(download_images_as_jpeg_locally,
                                                                                         satellite=satellite,
@@ -292,12 +302,14 @@ class DatasetPrepareService:
                 images.append(imageio.imread('images_for_gif/' + self.location + '/' + filename + '.jpg'))
             imageio.mimsave('images_for_gif/' + self.location + '.gif', images, format='GIF', fps=1)
 
-    def download_blob(self, bucket_name, prefix, destination_file_name):
+    def download_blob(self, bucket_name, prefix, destination_file_name, create_time):
         storage_client = storage.Client()
 
         bucket = storage_client.bucket(bucket_name)
         blobs = bucket.list_blobs(prefix=prefix)
         for blob in blobs:
+            if blob.time_created.date() < datetime.datetime.strptime(create_time, '%Y-%m-%d').date():
+                continue
             filename = blob.name.split('/')[2].replace('.tif', '')+'_'+blob.name.split('/')[1]+'.tif'
             blob.download_to_filename(destination_file_name + filename)
             print(
@@ -306,14 +318,14 @@ class DatasetPrepareService:
                 )
             )
 
-    def batch_downloading_from_gclound_training(self, satellites):
+    def batch_downloading_from_gclound_training(self, satellites, create_time):
         for satellite in satellites:
             blob_name = self.location + '/'+ satellite + '/'
             destination_name = 'data/' + self.location + '/' + satellite + '/'
             dir_name = os.path.dirname(destination_name)
             if not os.path.exists(dir_name):
                 os.makedirs(dir_name)
-            self.download_blob(config.get('output_bucket'), blob_name, destination_name)
+            self.download_blob(config.get('output_bucket'), blob_name, destination_name, create_time)
 
     def batch_downloading_from_gclound_referencing(self, satellites):
         for satellite in satellites:
