@@ -106,7 +106,7 @@ class Proj2DatasetProcessor(PreprocessingService):
                     # plt.imshow(array[6, :, :])
                     # plt.show()
 
-                    array = self.standardization(array)
+                    # array = self.standardization(array)
                     row_start = int(array.shape[1] * 0.35)
                     col_start = int(array.shape[2] * 0.35)
                     array = np.concatenate((array, af[np.newaxis, :, :]))
@@ -135,7 +135,12 @@ class Proj2DatasetProcessor(PreprocessingService):
         output_array_stacked_over_location = np.concatenate(stack_over_location, axis=0)
         print(output_array_stacked_over_location.shape)
         # output_array_stacked_over_location = self.normalization(output_array_stacked_over_location, n_channels)
-
+        print(np.nanmean(output_array_stacked_over_location[:, :, 0, :]), np.nanmean(output_array_stacked_over_location[:, :, 1, :]), np.nanmean(output_array_stacked_over_location[:, :, 2, :]), np.nanmean(output_array_stacked_over_location[:, :, 3, :]), np.nanmean(output_array_stacked_over_location[:, :, 4, :]))
+        print(np.nanstd(output_array_stacked_over_location[:, :, 0, :]),
+              np.nanstd(output_array_stacked_over_location[:, :, 1, :]),
+              np.nanstd(output_array_stacked_over_location[:, :, 2, :]),
+              np.nanstd(output_array_stacked_over_location[:, :, 3, :]),
+              np.nanstd(output_array_stacked_over_location[:, :, 4, :]))
         np.save(save_path + file_name, output_array_stacked_over_location.astype(np.float))
         # self.upload_to_gcloud(save_path+file_name)
 

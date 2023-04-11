@@ -51,12 +51,12 @@ class Proj5DatasetProcessor(PreprocessingService):
             self.write_tiff(save_path + location + '_' + str(current_date) + '.tif',
                             output_array_t[np.newaxis, :, :], new_profile)
 
-    def dataset_generator_proj5_image_seqtoseq(self, locations, file_name, label_name, visualize=True, ts_length=10, image_size=(224, 224)):
+    def dataset_generator_proj5_image_seqtoseq(self, locations, file_name, label_name, visualize=True, ts_length=10, interval=3, image_size=(224, 224)):
         satellite = 'VIIRS_Day'
         window_size = 1
         stack_over_location = []
         stack_label_over_locations = []
-        save_path = '/Volumes/yussd/proj5_dataset/'
+        save_path = 'data_train_proj5/'
         n_channels = 6
         if not os.path.exists(save_path):
             os.mkdir(save_path)
@@ -65,19 +65,22 @@ class Proj5DatasetProcessor(PreprocessingService):
             data_path = 'data/' + location + '/' + satellite + '/'
             file_list = glob(data_path + '/*.tif')
             file_list.sort()
-            num_sequence = len(file_list) // ts_length
+            if len(file_list) == 0:
+                continue
             preprocessing = PreprocessingService()
             array, _ = preprocessing.read_tiff(file_list[0])
             array_stack = []
             label_stack = []
             ba_label = np.zeros((image_size[0], image_size[1]))
             af_label = np.zeros((image_size[0], image_size[1]))
-            for j in range(num_sequence):
-                output_array = np.zeros((ts_length, n_channels, image_size[0], image_size[1]), dtype=np.float32)
-                output_label = np.zeros((ts_length, 2, image_size[0], image_size[1]), dtype=np.float32)
-                file_list_size = ts_length
-                for i in range(file_list_size):
-                    file = file_list[i + j * 10]
+            output_array = np.zeros((ts_length, n_channels, image_size[0], image_size[1]), dtype=np.float32)
+            output_label = np.zeros((ts_length, 2, image_size[0], image_size[1]), dtype=np.float32)
+            file_list_size = len(file_list)
+            for i in range(0, file_list_size, interval):
+                for j in range(ts_length):
+                    if i + j>=file_list_size:
+                        break
+                    file = file_list[j + i]
                     array, _ = preprocessing.read_tiff(file)
                     if array.shape[0]!=9:
                         print(file, 'band incomplete')
@@ -98,9 +101,9 @@ class Proj5DatasetProcessor(PreprocessingService):
                     af_label = np.logical_or(af, af_label)
                     af = af[row_start:row_start + image_size[0], col_start:col_start + image_size[1]]
                     ba_img = np.nan_to_num(ba_img[:, row_start:row_start + image_size[0], col_start:col_start + image_size[1]])
-                    output_array[i, :6, :, :] = img[:, :, :]
-                    output_label[i, 0, :, :] = ba_label
-                    output_label[i, 1, :, :] = af_label
+                    output_array[j, :6, :, :] = img[:, :, :]
+                    output_label[j, 0, :, :] = ba_label
+                    output_label[j, 1, :, :] = af_label
                     if visualize:
                         plt.figure(figsize=(12, 4), dpi=80)
                         plt.subplot(131)
@@ -115,11 +118,10 @@ class Proj5DatasetProcessor(PreprocessingService):
                         plt.show()
                 array_stack.append(output_array)
                 label_stack.append(output_label)
-            if num_sequence>0:
-                output_array_stacked = np.stack(array_stack, axis=0)
-                output_label_stacked = np.stack(label_stack, axis=0)
-                stack_over_location.append(output_array_stacked)
-                stack_label_over_locations.append(output_label_stacked)
+            output_array_stacked = np.stack(array_stack, axis=0)
+            output_label_stacked = np.stack(label_stack, axis=0)
+            stack_over_location.append(output_array_stacked)
+            stack_label_over_locations.append(output_label_stacked)
         output_array_stacked_over_location = np.concatenate(stack_over_location, axis=0)
         output_label_stacked_over_location = np.concatenate(stack_label_over_locations, axis=0)
         del stack_over_location
@@ -135,7 +137,7 @@ class Proj5DatasetProcessor(PreprocessingService):
         window_size = 1
         stack_over_location = []
         stack_label_over_locations = []
-        save_path = '/Volumes/yussd/proj5_dataset/'
+        save_path = 'data_train_proj5/'
         n_channels = 6
         if not os.path.exists(save_path):
             os.mkdir(save_path)

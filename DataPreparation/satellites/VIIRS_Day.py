@@ -14,13 +14,14 @@ class VIIRS_Day:
         self.viirs_af = ee.FeatureCollection('projects/grand-drive-285514/assets/afall')
         # self.viirs_af = ee.FeatureCollection('projects/ee-zhaoyutim/assets/2022naafall09')
         # self.viirs_af = ee.FeatureCollection('projects/grand-drive-285514/assets/fire_archive_SV-C2_232183')
-        self.polygon = ee.FeatureCollection("users/zhaoyutim/polygon2020")
+
         # self.polygon = ee.FeatureCollection("users/zhaoyutim/polygon2019")
         # self.viirs_sr = ee.ImageCollection('NOAA/VIIRS/001/VNP09GA')
         self.viirs_sr = ee.ImageCollection('projects/proj5-dataset/assets/proj5_dataset').filter(ee.Filter.stringContains('system:index','MOD'))
 
     def collection_of_interest(self, start_time, end_time, geometry):
-
+        year = start_time[:4]
+        self.polygon = ee.FeatureCollection("users/zhaoyutim/polygon"+year).map(self.set_datecurrent)
         viirs_collection = self.viirs.filterDate(start_time, end_time).filterBounds(geometry)
         self.datePolygon = self.polygon.filter(
             ee.Filter.stringContains(leftField='DateCurren', rightValue=start_time[:4] + "/" + start_time[5:7] + "/" + start_time[8:10])).reduceToImage(['OBJECTID'], ee.Reducer.first())
@@ -51,3 +52,6 @@ class VIIRS_Day:
 
     def get_cloud_masked_img(self, img):
         return img.addBands((img.select(['b1']).gt(30).And(img.select(['b2']).gt(30))).Not().rename(['cloud_mask']))
+
+    def set_datecurrent(self, feature):
+        return feature.set({'DateCurren': ee.Date(feature.get('DateCurren')).format('Y/MM/dd')})
