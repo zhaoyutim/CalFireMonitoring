@@ -269,7 +269,7 @@ class DatasetPrepareService:
                 img_collection, img_collection_as_gif = self.prepare_daily_image(download_images_as_jpeg_locally,
                                                                                         satellite=satellite,
                                                                                         date_of_interest=date_of_interest)
-                max_img = img_collection.max()
+                max_img = img_collection.median()
                 if len(max_img.getInfo().get('bands')) != 0:
                     self.download_image_to_gcloud(img_collection, satellite, date_of_interest, utm_zone)
         if download_images_as_jpeg_locally:
