@@ -51,7 +51,7 @@ if __name__ == '__main__':
     # proj1_processor = Proj1DatasetProcessor()
     # for i, id in enumerate(ids):
         # roi = [13.38, 61.55, 15.60, 62.07]
-        # if id in skip_ids:
+        # if id not in test_ids:
         #     continue
         # dataset_pre = DatasetPrepareService(location=id, rectangular_size=1, latitude=lats[i], longitude=lons[i],
         #                                     start_time=datetime.strptime(start_dates[i], '%Y-%m-%d').date(),
@@ -94,9 +94,9 @@ if __name__ == '__main__':
     # proj2_processor.dataset_generator_proj2_image(locations, file_name ='proj3_all_fire_img_v3.npy')
 
     # Proj5 used functions
-    proj5_processor.dataset_generator_proj5_image_seqtoseq(train_ids, visualize=True, file_name='proj5_train_img_seqtoseq_all.npy', label_name='proj5_train_label_seqtoseq_all.npy',
-                                                           save_path = 'data_train_proj5/', ts_length=8, interval=3, image_size=(512, 512))
-    # proj5_processor.dataset_generator_proj5_image_seqtoseq(val_ids, visualize=True, file_name='proj5_val_img_seqtoseq.npy', label_name='proj5_val_label_seqtoseq.npy',
-    #                                                        save_path='data_val_proj5/', ts_length=ts_length, interval=3, image_size=(512, 512))
-    # proj5_processor.dataset_generator_proj5_image_seqtoseq(test_ids, visualize=True, file_name='proj5_'+test_ids[0]+'_img_seqtoseq.npy', label_name='proj5_'+test_ids[0]+'_label_seqtoseq.npy',
-    #                                                        save_path='data_test_proj5/', image_size=(512, 512))
+    # proj5_processor.dataset_generator_proj5_image_seqtoseq(train_ids, visualize=False, file_name='proj5_train_img_seqtoseq_alll_'+str(ts_length)+'.npy', label_name='proj5_train_label_seqtoseq_alll_'+str(ts_length)+'.npy',
+    #                                                        save_path = 'data_train_proj5/', ts_length=ts_length, interval=3, image_size=(512, 512))
+    # proj5_processor.dataset_generator_proj5_image_seqtoseq(val_ids, visualize=True, file_name='proj5_val_img_seqtoseql_'+str(ts_length)+'.npy', label_name='proj5_val_label_seqtoseql_'+str(ts_length)+'.npy',
+    #                                                        save_path='data_val_proj5/', rs_idx=0.3, cs_idx=0.3, ts_length=ts_length, interval=3, image_size=(256, 256))
+    proj5_processor.dataset_generator_proj5_image_seqtoseq(test_ids, visualize=True, file_name='proj5_'+test_ids[0]+'_img_seqtoseql_'+str(ts_length)+'.npy', label_name='proj5_'+test_ids[0]+'_label_seqtoseql_'+str(ts_length)+'.npy',
+                                                           save_path='data_test_proj5/', ts_length=ts_length, interval=ts_length, rs_idx=0.3, cs_idx=0.3, image_size=(256, 256))

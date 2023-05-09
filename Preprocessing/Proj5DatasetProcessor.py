@@ -51,7 +51,7 @@ class Proj5DatasetProcessor(PreprocessingService):
             self.write_tiff(save_path + location + '_' + str(current_date) + '.tif',
                             output_array_t[np.newaxis, :, :], new_profile)
 
-    def dataset_generator_proj5_image_seqtoseq(self, locations, file_name, label_name, save_path, visualize=True, ts_length=10, interval=3, image_size=(224, 224)):
+    def dataset_generator_proj5_image_seqtoseq(self, locations, file_name, label_name, save_path, rs_idx=0, cs_idx=0, visualize=True, ts_length=10, interval=3, image_size=(224, 224)):
         satellite = 'VIIRS_Day'
         window_size = 1
         stack_over_location = []
@@ -72,11 +72,11 @@ class Proj5DatasetProcessor(PreprocessingService):
             label_stack = []
             ba_label = np.zeros((image_size[0], image_size[1]))
             af_label = np.zeros((image_size[0], image_size[1]))
-            output_array = np.zeros((ts_length, n_channels, image_size[0], image_size[1]), dtype=np.float32)
-            output_label = np.zeros((ts_length, 2, image_size[0], image_size[1]), dtype=np.float32)
             file_list_size = len(file_list)
             max_img = np.zeros((n_channels, image_size[0], image_size[1]), dtype=np.float32)
             for i in range(0, file_list_size, interval):
+                output_array = np.zeros((ts_length, n_channels, image_size[0], image_size[1]), dtype=np.float32)
+                output_label = np.zeros((ts_length, 3, image_size[0], image_size[1]), dtype=np.float32)
                 for j in range(ts_length):
                     if i + j>=file_list_size:
                         break
@@ -86,8 +86,8 @@ class Proj5DatasetProcessor(PreprocessingService):
                         print(file, 'band incomplete')
                         continue
                     img = array[:6,:,:]
-                    row_start = int(img.shape[1] * 0)
-                    col_start = int(img.shape[2] * 0)
+                    row_start = int(img.shape[1] * rs_idx)
+                    col_start = int(img.shape[2] * cs_idx)
 
                     img = np.nan_to_num(img[:, row_start:row_start + image_size[0], col_start:col_start + image_size[1]])
                     max_img = np.maximum(img, max_img)
@@ -103,21 +103,21 @@ class Proj5DatasetProcessor(PreprocessingService):
                     af = np.nan_to_num(af[row_start:row_start + image_size[0], col_start:col_start + image_size[1]])
                     ba_label = np.logical_or(label, ba_label)
                     af_label = np.logical_or(af, af_label)
-                    ba_img = np.nan_to_num(ba_img[:, row_start:row_start + image_size[0], col_start:col_start + image_size[1]])
                     output_array[j, :6, :, :] = img
                     output_label[j, 0, :, :] = ba_label
                     output_label[j, 1, :, :] = af_label
+                    output_label[j, 2, :, :] = np.logical_or(af_label, ba_label)
                     if visualize:
                         plt.figure(figsize=(12, 4), dpi=80)
                         plt.subplot(131)
-                        plt.imshow(self.normalization(ba_img).transpose((1,2,0)))
+                        plt.imshow(ba_img.transpose((1,2,0)))
                         plt.imshow(np.where(ba_label==0, np.nan, 1), cmap='hsv', interpolation='nearest', alpha=1)
                         plt.subplot(132)
-                        plt.imshow(self.normalization(ba_img).transpose((1,2,0)))
+                        plt.imshow(ba_img.transpose((1,2,0)))
                         plt.imshow(np.where(af_label==0, np.nan, 1), cmap='hsv', interpolation='nearest', alpha=1)
                         plt.subplot(133)
-                        plt.imshow(self.normalization(ba_img).transpose((1,2,0)))
-                        plt.savefig(save_path+location+'_sequence_'+str(j)+'_time_'+str(i)+'.png')
+                        plt.imshow(ba_img.transpose((1,2,0)))
+                        plt.savefig(save_path+location+'_sequence_'+str(i)+'_time_'+str(j)+'.png')
                         plt.show()
                 array_stack.append(output_array)
                 label_stack.append(output_label)
@@ -131,9 +131,18 @@ class Proj5DatasetProcessor(PreprocessingService):
         del stack_label_over_locations
         print(output_array_stacked_over_location.shape)
         print(output_label_stacked_over_location.shape)
+        output_array_stacked_over_location = output_array_stacked_over_location.transpose((0,2,1,3,4))
+        output_label_stacked_over_location = output_label_stacked_over_location.transpose((0,2,1,3,4))
+        if image_size[0]==512:
+            output_array_stacked_over_location = np.concatenate([output_array_stacked_over_location[:,:,:,:256,:256], output_array_stacked_over_location[:,:,:,:256,256:512],
+                                          output_array_stacked_over_location[:,:,:,256:512,:256], output_array_stacked_over_location[:,:,:,256:512,256:512]], axis=0)
 
-        # np.save(save_path + file_name, output_array_stacked_over_location.astype(np.float32))
-        # np.save(save_path + label_name, output_label_stacked_over_location.astype(np.float32))
+            output_label_stacked_over_location = np.concatenate([output_label_stacked_over_location[:, :, :, :256, :256], output_label_stacked_over_location[:, :, :, :256, 256:512],
+                                         output_label_stacked_over_location[:, :, :, 256:512, :256], output_label_stacked_over_location[:, :, :, 256:512, 256:512]],
+                                         axis=0)
+
+        np.save(save_path + file_name, output_array_stacked_over_location.astype(np.float32))
+        np.save(save_path + label_name, output_label_stacked_over_location.astype(np.float32))
 
     def dataset_generator_proj5_image_seqtoone(self, locations, file_name, label_name, visualize=True, ts_length=10, interval=3, image_size=(224, 224)):
         satellite = 'VIIRS_Day'
