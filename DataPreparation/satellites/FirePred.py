@@ -10,7 +10,6 @@ class FirePred:
         self.landcover = ee.ImageCollection("MODIS/061/MCD12Q1")
         self.weather = ee.ImageCollection("IDAHO_EPSCOR/GRIDMET")
         self.drought = ee.ImageCollection("GRIDMET/DROUGHT")
-        self.viirs = ee.ImageCollection("NOAA/VIIRS/001/VNP09GA")
         self.viirs_af = ee.FeatureCollection('projects/grand-drive-285514/assets/afall')
 
     def collection_of_interest(self, start_time, end_time, geometry):

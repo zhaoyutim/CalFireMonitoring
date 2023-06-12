@@ -1,5 +1,6 @@
 import numpy as np
 import rasterio
+from rasterio.merge import merge
 import yaml
 
 with open("config/configuration.yml", "r", encoding="utf8") as f:
@@ -39,4 +40,32 @@ class PreprocessingService:
             with rasterio.open(file_path, 'w', **profile) as dst:
                 dst.write(arr.astype(rasterio.float32))
 
+    def mosaic_geotiffs(self, geotiff_files):
+        # Read images and metadata
+        src_files = [rasterio.open(file) for file in geotiff_files]
 
+        # Merge images using maximum values for overlapping locations
+        mosaic, out_transform = merge(src_files, method="max")
+
+        # Copy metadata from the first file
+        out_meta = src_files[0].meta.copy()
+
+        # Update metadata with the mosaic dimensions and transform
+        out_meta.update({
+            "height": mosaic.shape[1],
+            "width": mosaic.shape[2],
+            "transform": out_transform
+        })
+
+        # Close source files
+        for src in src_files:
+            src.close()
+
+        return mosaic, out_meta
+
+if __name__=='__main__':
+    preprocessing_service = PreprocessingService()
+    output_path = 'mosaic.tif'
+    tiff_files = ['../data/22713339/VIIRS_Day/2019-03-31_VIIRS_Day.tif', '../data/22938749/VIIRS_Day/2019-06-08_VIIRS_Day.tif']
+    mosaic, mosaic_metadata = preprocessing_service.mosaic_geotiffs(tiff_files)
+    preprocessing_service.write_tiff(output_path, mosaic, mosaic_metadata)
