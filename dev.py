@@ -25,37 +25,34 @@ if __name__ == '__main__':
     # os.environ['HTTP_PROXY'] = 'http://127.0.0.1:15236'
     # os.environ['HTTPS_PROXY'] = 'http://127.0.0.1:15236'
     ee.Initialize()
-    satellites = ['VIIRS_Day']
+    satellites = ['VIIRS_Night']
     val_ids = ['24462610', '24462788', '24462753']
     test_ids = ['24461623', '24332628']
     skip_ids = ['21890069', '20777160', '20777163', '20777166']
+    target_ids = ['21889672', '21889683', '21889697', '21889719', '21889734', '21889754', '21997775']
     # satellites = ['GOES']
     locations = ['August_complex', 'LNU_lighting_complex', 'SCU_lighting_complex', 'CZU_lighting_complex', 'North_complex_fire', 'Beachie_wildfire_2', 'Beachie_wildfire', 'Holiday_farm_wildfire', 'creek_fire']
     locations += ['Anonymous_fire1', 'Anonymous_fire2', 'Anonymous_fire3', 'Anonymous_fire4', 'Anonymous_fire5', 'Anonymous_fire6','Anonymous_fire7', 'Anonymous_fire7', 'Anonymous_fire8', 'Anonymous_fire10']
 
     # locations = ['Doctor_creek_fire']
     df = df.sort_values(by=['Id'])
+    train_df = df[~df.Id.isin(val_ids + skip_ids + test_ids)]
+    val_df = df[df.Id.isin(val_ids)]
+    test_df = df[df.Id.isin(test_ids)]
+    target_df = df[df.Id.isin(target_ids)]
+    df = train_df
     ids, start_dates, end_dates, lons, lats = df['Id'].values.astype(str), df.start_date.values, df.end_date.values, df['lon'].values.astype(float), df['lat'].values.astype(float)
-    train_ids = [id for id in ids if id not in val_ids]
-    # locations = ['mosquito_fire'] #32723
-    # sydney_fire 32756
-    # locations = ['double_creek_fire'] #32723
-    # generate_goes = False
-    # mode = 'viirs'
-    # preprocessing = PreprocessingService()
-    # eval = EvaluationService()
-    # dataset_proj2 = []
-    ts_length=8
-    proj5_processor = Proj5DatasetProcessor()
-    proj2_processor = Proj2DatasetProcessor()
-    # proj1_processor = Proj1DatasetProcessor()
-    # for i, id in enumerate(ids):
+    train_ids = train_df['Id'].values.astype(str)
+    val_ids = val_df['Id'].values.astype(str)
+    test_ids = test_df['Id'].values.astype(str)
+
+    for i, id in enumerate(ids):
         # roi = [13.38, 61.55, 15.60, 62.07]
-        # if id not in test_ids:
-        #     continue
-        # dataset_pre = DatasetPrepareService(location=id, rectangular_size=1, latitude=lats[i], longitude=lons[i],
-        #                                     start_time=datetime.strptime(start_dates[i], '%Y-%m-%d').date(),
-        #                                     end_time=datetime.strptime(end_dates[i], '%Y-%m-%d').date())
+        if id in skip_ids:
+            continue
+        dataset_pre = DatasetPrepareService(location=id, rectangular_size=1, latitude=lats[i], longitude=lons[i],
+                                            start_time=datetime.strptime(start_dates[i], '%Y-%m-%d').date(),
+                                            end_time=datetime.strptime(end_dates[i], '%Y-%m-%d').date())
         # print("Current Location:" + id)
         #
         # Visualizing and preparation work
@@ -70,8 +67,8 @@ if __name__ == '__main__':
         # firmsProcessor.accumulation(location)
 
         # training phase
-        # dataset_pre.download_dataset_to_gcloud(satellites, '4326', False)
-        # dataset_pre.batch_downloading_from_gclound_training(satellites, '2023-04-25')
+        dataset_pre.download_dataset_to_gcloud(satellites, '4326', False)
+        # dataset_pre.batch_downloading_from_gclound_training(satellites, '2023-05-12')
         # preprocessing.corp_tiff_to_same_size(location, False)
         # proj1_processor.dataset_generator_proj1(location)
 
@@ -98,5 +95,5 @@ if __name__ == '__main__':
     #                                                        save_path = 'data_train_proj5/', ts_length=ts_length, interval=3, image_size=(512, 512))
     # proj5_processor.dataset_generator_proj5_image_seqtoseq(val_ids, visualize=True, file_name='proj5_val_img_seqtoseql_'+str(ts_length)+'.npy', label_name='proj5_val_label_seqtoseql_'+str(ts_length)+'.npy',
     #                                                        save_path='data_val_proj5/', rs_idx=0.3, cs_idx=0.3, ts_length=ts_length, interval=3, image_size=(256, 256))
-    proj5_processor.dataset_generator_proj5_image_seqtoseq(test_ids, visualize=True, file_name='proj5_'+test_ids[0]+'_img_seqtoseql_'+str(ts_length)+'.npy', label_name='proj5_'+test_ids[0]+'_label_seqtoseql_'+str(ts_length)+'.npy',
-                                                           save_path='data_test_proj5/', ts_length=ts_length, interval=ts_length, rs_idx=0.3, cs_idx=0.3, image_size=(256, 256))
+    # proj5_processor.dataset_generator_proj5_image_seqtoseq(test_ids, visualize=True, file_name='proj5_'+test_ids[0]+'_img_seqtoseql_'+str(ts_length)+'.npy', label_name='proj5_'+test_ids[0]+'_label_seqtoseql_'+str(ts_length)+'.npy',
+    #                                                        save_path='data_test_proj5/', ts_length=ts_length, interval=ts_length, rs_idx=0.3, cs_idx=0.3, image_size=(256, 256))
