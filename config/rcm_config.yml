@@ -1,0 +1,131 @@
+donnie_creek:
+  pre: 2023-04-15
+  start: 2023-05-11
+  end: 2023-07-15
+  bestbeam: SC30MCPD
+  th: 10
+  roi:
+  -  -123.01
+  -  56.96
+  -  -120.50
+  -  58.15
+
+slave_lake:
+  pre: 2023-04-15
+  start: 2023-05-05
+  end: 2023-07-15
+  bestbeam: SC30MCPDA
+  th: 10
+  roi:
+  -  -117.50
+  -  54.42
+  -  -114.85
+  -  55.29
+
+slave_lake3:
+  pre: 2023-04-15
+  start: 2023-05-05
+  end: 2023-07-15
+  bestbeam: SC30MCPA
+  th: 10
+  roi:
+  -  -119.55
+  -  56.03
+  -  -118.83
+  -  56.43
+
+slave_lake4:
+  pre: 2023-04-15
+  start: 2023-05-05
+  end: 2023-07-15
+  bestbeam: SC30MCPA
+  th: 10
+  roi:
+  -  -117.18
+  -  55.67
+  -  -116.04
+  -  56.27
+
+slave_lake5:
+  pre: 2023-04-15
+  start: 2023-05-05
+  end: 2023-07-15
+  bestbeam: SC30MCPA
+  th: 10
+  roi:
+  -  -115.43
+  -  55.84
+  -  -114.79
+  -  56.26
+
+edmonton:
+  pre: 2023-04-15
+  start: 2023-05-05
+  end: 2023-07-15
+  bestbeam: SC30MCPA
+  th: 10
+  roi:
+  -  -116.98
+  -  52.65
+  -  -115.29
+  -  53.65
+
+rainbow_lake:
+  pre: 2023-04-15
+  start: 2023-05-05
+  end: 2023-07-15
+  bestbeam: SC30MCPA
+  th: 10
+  roi:
+  -  -119.95
+  -  58.27
+  -  -118.84
+  -  58.80
+
+fox_lake:
+  pre: 2023-04-15
+  start: 2023-05-05
+  end: 2023-07-15
+  bestbeam: SC30MCPA
+  th: 10
+  roi:
+  -  -114.80
+  -  58.27
+  -  -113.67
+  -  58.70
+
+yellow_knife1:
+  pre: 2023-06-01
+  start: 2023-07-01
+  end: 2023-08-15
+  bestbeam: SC30MCPA
+  th: 10
+  roi:
+  -  -116.12
+  -  62.43
+  -  -114.67
+  -  63.13
+
+yellow_knife2:
+  pre: 2023-06-01
+  start: 2023-07-06
+  end: 2023-08-15
+  bestbeam: SC30MCPA
+  th: 10
+  roi:
+  -  -114.18
+  -  62.65
+  -  -113.52
+  -  62.94
+
+quebec:
+  pre: 2023-06-01
+  start: 2023-07-28
+  end: 2023-09-16
+  bestbeam: SC30MCPA
+  th: 10
+  roi:
+  -  -76.82
+  -  52.10
+  -  -73.10
+  -  53.93

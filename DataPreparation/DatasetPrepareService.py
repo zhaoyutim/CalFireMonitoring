@@ -39,16 +39,14 @@ df = df.sort_values(by=['Id'])
 ids, start_dates, end_dates, lons, lats = df['Id'].values.astype(str), df['start_date'].values.astype(str), df[
     'end_date'].values.astype(str), df['lon'].values.astype(float), df['lat'].values.astype(float)
 class DatasetPrepareService:
-    def __init__(self, location, rectangular_size, latitude, longitude, start_time, end_time, roi=None):
+    def __init__(self, location, start_time, end_time, roi=None, rectangular_size=None, latitude=None, longitude=None):
         self.location = location
         # self.rectangular_size = config.get('rectangular_size')
         # self.latitude = config.get(self.location).get('latitude')
         # self.longitude = config.get(self.location).get('longitude')
         # self.start_time = config.get(location).get('start')
         # self.end_time = config.get(location).get('end')
-        self.rectangular_size = rectangular_size
-        self.latitude = latitude
-        self.longitude = longitude
+
         self.start_time = start_time
         self.end_time = end_time
         # self.start_time = datetime.date(2018, 7, 14)
@@ -57,13 +55,16 @@ class DatasetPrepareService:
         # self.end_time = datetime.date.today()
         # self.rectangular_size = config.get('rectangular_size')
         if roi == None:
+            self.rectangular_size = rectangular_size
+            self.latitude = latitude
+            self.longitude = longitude
             self.geometry = ee.Geometry.Rectangle(
                 [self.longitude - self.rectangular_size, self.latitude - self.rectangular_size,
                  self.longitude + self.rectangular_size, self.latitude + self.rectangular_size])
         else:
             self.geometry = ee.Geometry.Rectangle(roi)
 
-        self.scale_dict = {"VIIRS_Day":375, "GOES": 375, "GOES_FIRE": 2000, "FIRMS": 500, "Sentinel2": 20, "VIIRS": 375, "MODIS": 500, "Sentinel1_asc": 20, "Sentinel1_dsc":20, "FirePred":500}
+        self.scale_dict = {"VIIRS_Day":375, "GOES": 375, "GOES_FIRE": 2000, "FIRMS": 500, "Sentinel2": 20, "VIIRS": 375, "MODIS": 500, "Sentinel1_asc": 20, "Sentinel1_dsc":20, "FirePred":375}
 
     def cast_to_uint8(self, image):
         return image.multiply(512).uint8()
