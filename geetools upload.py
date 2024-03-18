@@ -15,7 +15,5 @@ if __name__=='__main__':
             print(img_ids[i])
     for i in range(len(mod_ids)):
         if mod_ids[i].replace('MOD', 'IMG') not in img_ids:
-            if '2017' in mod_ids[i]:
-                os.system('geeadd delete --id '+mod_ids[i])
             print(mod_ids[i])
     print('over')

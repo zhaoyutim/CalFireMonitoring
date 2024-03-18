@@ -25,7 +25,8 @@ if __name__ == '__main__':
     # os.environ['HTTP_PROXY'] = 'http://127.0.0.1:15236'
     # os.environ['HTTPS_PROXY'] = 'http://127.0.0.1:15236'
     ee.Initialize()
-    satellites = ['VIIRS_Day', 'VIIRS_Night']
+
+    satellites = ['VIIRS_Night']
     val_ids = ['24462610', '24462788', '24462753']
     test_ids = ['24461623', '24332628']
     skip_ids = ['21890069', '20777160', '20777163', '20777166']
@@ -37,6 +38,7 @@ if __name__ == '__main__':
     # locations = ['Doctor_creek_fire']
     df = df.sort_values(by=['Id'])
     df['Id'] = df['Id'].astype(str)
+
     train_df = df[~df.Id.isin(val_ids + skip_ids + test_ids)]
     val_df = df[df.Id.isin(val_ids)]
     test_df = df[df.Id.isin(test_ids)]
@@ -63,7 +65,6 @@ if __name__ == '__main__':
                                             start_time=datetime.strptime(start_dates[i], '%Y-%m-%d').date(),
                                             end_time=datetime.strptime(end_dates[i], '%Y-%m-%d').date())
         print("Current Location:" + id)
-
         # Visualizing and preparation work
         # map_client = dataset_pre.visualizing_images_per_day(satellites, time_dif=5)
         # dataset_pre.generate_video_for_goes()

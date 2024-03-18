@@ -24,6 +24,7 @@ from DataPreparation.satellites.Sentinel1 import Sentinel1
 from DataPreparation.satellites.Sentinel2 import Sentinel2
 from DataPreparation.satellites.VIIRS import VIIRS
 from DataPreparation.satellites.VIIRS_Day import VIIRS_Day
+from DataPreparation.satellites.VIIRS_Night import VIIRS_Night
 from DataPreparation.utils.EarthEngineMapClient import EarthEngineMapClient
 from Preprocessing.PreprocessingService import PreprocessingService
 
@@ -63,9 +64,7 @@ class DatasetPrepareService:
                  self.longitude + self.rectangular_size, self.latitude + self.rectangular_size])
         else:
             self.geometry = ee.Geometry.Rectangle(roi)
-
-        self.scale_dict = {"VIIRS_Day":375, "GOES": 375, "GOES_FIRE": 2000, "FIRMS": 500, "Sentinel2": 20, "VIIRS": 375, "MODIS": 500, "Sentinel1_asc": 20, "Sentinel1_dsc":20, "FirePred":375}
-
+        self.scale_dict = {"VIIRS_Day":375, "VIIRS_Night":375, "GOES": 375, "GOES_FIRE": 2000, "FIRMS": 500, "Sentinel2": 20, "VIIRS": 375, "MODIS": 500, "Sentinel1_asc": 20, "Sentinel1_dsc":20, "FirePred":500}
     def cast_to_uint8(self, image):
         return image.multiply(512).uint8()
 
@@ -95,6 +94,8 @@ class DatasetPrepareService:
             satellite_client = GOES_FIRE()
         elif satellite == 'VIIRS_Day':
             satellite_client = VIIRS_Day()
+        elif satellite == 'VIIRS_Night':
+            satellite_client = VIIRS_Night()
         elif satellite == 'FirePred':
             satellite_client = FirePred()
         else:
