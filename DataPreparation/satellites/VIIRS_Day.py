@@ -9,7 +9,7 @@ class VIIRS_Day:
         # self.viirs = ee.ImageCollection('projects/grand-drive-285514/assets/swedish_fire')
 
         # self.viirs_af = ee.FeatureCollection('projects/grand-drive-285514/assets/afall')
-        self.viirs_af = ee.FeatureCollection('projects/grand-drive-285514/assets/af2017')
+        
         # self.viirs_af = ee.FeatureCollection('projects/ee-zhaoyutim/assets/2022naafall09')
         # self.viirs_af = ee.FeatureCollection('projects/grand-drive-285514/assets/fire_archive_SV-C2_232183')
 
@@ -24,11 +24,13 @@ class VIIRS_Day:
             self.polygon = ee.FeatureCollection("users/zhaoyutim/polygon" + year).map(self.set_datecurrent)
             self.datePolygon = self.polygon.filter(
                 ee.Filter.stringContains(leftField='DateCurren', rightValue=start_time[:4] + "-" + start_time[5:7] + "-" + start_time[8:10])).reduceToImage(['OBJECTID'], ee.Reducer.first())
+            self.viirs_af = ee.FeatureCollection('projects/grand-drive-285514/assets/af2017')
         else:
             self.polygon = ee.FeatureCollection("users/zhaoyutim/polygon" + year).map(self.set_datecurrent_2017)
             self.datePolygon = self.polygon.filter(
                 ee.Filter.stringContains(leftField='DateCurren',
                                          rightValue=start_time[:4] + "/" + start_time[5:7] + "/" + start_time[8:10])).reduceToImage(['OBJECTID'], ee.Reducer.first())
+            self.viirs_af = ee.FeatureCollection('projects/ee-zhaoyutim/assets/afall'+year)
 
         self.viirs_af_img = self.viirs_af.filterBounds(geometry)\
             .filter(ee.Filter.gte('acq_date', start_time[:-6]))\
@@ -51,7 +53,7 @@ class VIIRS_Day:
         def get_combine(img):
             return ee.Image(ee.List(img).get(1)).addBands(ee.Image(ee.List(img).get(0)).select('b1').rename('m11'))
 
-        return ee.ImageCollection(self.zip_col.map(get_combine)).map(self.add_bands).map(self.get_cloud_masked_img)
+        return ee.ImageCollection(self.zip_col.map(get_combine)).map(self.add_bands)#.map(self.get_cloud_masked_img)
     def get_visualization_parameter(self):
         return {'bands': ['b1', 'b2', 'b3'], 'min': 0, 'max': 100.0}
 

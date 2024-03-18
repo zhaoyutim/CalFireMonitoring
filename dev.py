@@ -25,6 +25,7 @@ if __name__ == '__main__':
     # os.environ['HTTP_PROXY'] = 'http://127.0.0.1:15236'
     # os.environ['HTTPS_PROXY'] = 'http://127.0.0.1:15236'
     ee.Initialize()
+
     satellites = ['VIIRS_Night']
     val_ids = ['24462610', '24462788', '24462753']
     test_ids = ['24461623', '24332628']
@@ -36,6 +37,8 @@ if __name__ == '__main__':
 
     # locations = ['Doctor_creek_fire']
     df = df.sort_values(by=['Id'])
+    df['Id'] = df['Id'].astype(str)
+
     train_df = df[~df.Id.isin(val_ids + skip_ids + test_ids)]
     val_df = df[df.Id.isin(val_ids)]
     test_df = df[df.Id.isin(test_ids)]
@@ -45,16 +48,23 @@ if __name__ == '__main__':
     train_ids = train_df['Id'].values.astype(str)
     val_ids = val_df['Id'].values.astype(str)
     test_ids = test_df['Id'].values.astype(str)
-
+    target_ids = target_df['Id'].values.astype(str)
+    # locations = ['mosquito_fire'] #32723
+    # sydney_fire 32756
+    # locations = ['double_creek_fire'] #32723
+    # generate_goes = False
+    # mode = 'viirs'
+    # preprocessing = PreprocessingService()
+    # eval = EvaluationService()
+    # dataset_proj2 = []
     for i, id in enumerate(ids):
+        # if 'NM' not in train_ids:
+            # continue
         # roi = [13.38, 61.55, 15.60, 62.07]
-        if id in skip_ids:
-            continue
         dataset_pre = DatasetPrepareService(location=id, rectangular_size=1, latitude=lats[i], longitude=lons[i],
                                             start_time=datetime.strptime(start_dates[i], '%Y-%m-%d').date(),
                                             end_time=datetime.strptime(end_dates[i], '%Y-%m-%d').date())
-        # print("Current Location:" + id)
-        #
+        print("Current Location:" + id)
         # Visualizing and preparation work
         # map_client = dataset_pre.visualizing_images_per_day(satellites, time_dif=5)
         # dataset_pre.generate_video_for_goes()
@@ -68,7 +78,7 @@ if __name__ == '__main__':
 
         # training phase
         dataset_pre.download_dataset_to_gcloud(satellites, '4326', False)
-        # dataset_pre.batch_downloading_from_gclound_training(satellites, '2023-05-12')
+        # dataset_pre.batch_downloading_from_gclound_training(satellites, '2023-11-16')
         # preprocessing.corp_tiff_to_same_size(location, False)
         # proj1_processor.dataset_generator_proj1(location)
 
@@ -86,14 +96,3 @@ if __name__ == '__main__':
         # Proj2 used functions
         # proj2_processor.dataset_generator_proj2_image_test(location, file_name ='proj3_' + location + '_img.npy')
         # preprocessing.reconstruct_tif_proj2(location)
-    # Proj2 used functions
-    # proj2_processor.dataset_generator_proj2(locations, window_size=1)
-    # proj2_processor.dataset_generator_proj2_image(locations, file_name ='proj3_all_fire_img_v3.npy')
-
-    # Proj5 used functions
-    # proj5_processor.dataset_generator_proj5_image_seqtoseq(train_ids, visualize=False, file_name='proj5_train_img_seqtoseq_alll_'+str(ts_length)+'.npy', label_name='proj5_train_label_seqtoseq_alll_'+str(ts_length)+'.npy',
-    #                                                        save_path = 'data_train_proj5/', ts_length=ts_length, interval=3, image_size=(512, 512))
-    # proj5_processor.dataset_generator_proj5_image_seqtoseq(val_ids, visualize=True, file_name='proj5_val_img_seqtoseql_'+str(ts_length)+'.npy', label_name='proj5_val_label_seqtoseql_'+str(ts_length)+'.npy',
-    #                                                        save_path='data_val_proj5/', rs_idx=0.3, cs_idx=0.3, ts_length=ts_length, interval=3, image_size=(256, 256))
-    # proj5_processor.dataset_generator_proj5_image_seqtoseq(test_ids, visualize=True, file_name='proj5_'+test_ids[0]+'_img_seqtoseql_'+str(ts_length)+'.npy', label_name='proj5_'+test_ids[0]+'_label_seqtoseql_'+str(ts_length)+'.npy',
-    #                                                        save_path='data_test_proj5/', ts_length=ts_length, interval=ts_length, rs_idx=0.3, cs_idx=0.3, image_size=(256, 256))
